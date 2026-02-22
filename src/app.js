@@ -1,19 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const path = require('path');
+
+// Configuraciones
 const appConfig = require('./config/app');
+const modulesConfig = require('./config/modules.config');
 
 // Middlewares globales
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
 const { sanitizeInput, limitPayloadSize } = require('./middlewares/security.middleware');
+const { apiLimiter } = require('./middlewares/rate-limit.middleware');
 
-// Importar rutas
-const settingRoutes = require('./modules/settings/routes/setting.routes');
+// Loaders
+const RoutesLoader = require('./loaders/routes.loader');
+
+// Logger
+const logger = require('./utils/logger');
 
 /**
- * Configuración de Express Application
+ * Configuración de Express Application - MODULAR
  * Sistema Integral de Gestión Comercial
  */
 const app = express();
@@ -24,26 +30,17 @@ const app = express();
 
 // Helmet - Headers de seguridad
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" } // Permitir servir archivos estáticos
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // CORS - Permitir peticiones de otros dominios
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['http://localhost:4200', 'http://localhost:4201'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
 }));
 
-// Rate limiting - Limitar peticiones por IP
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Límite de 100 peticiones por ventana
-  message: 'Demasiadas peticiones desde esta IP, intente más tarde',
-  standardHeaders: true,
-  legacyHeaders: false
-});
-app.use(limiter);
+// Rate limiting general
+app.use(apiLimiter);
 
 // Limitar tamaño del payload
 app.use(limitPayloadSize(10 * 1024 * 1024)); // 10MB
@@ -82,40 +79,94 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: appConfig.env,
-    version: '1.0.0'
+    version: '1.0.0',
+    database: 'Connected'
   });
 });
 
 /**
  * GET /
- * Información básica de la API
+ * Información básica de la API y documentación
  */
 app.get('/', (req, res) => {
+  const modulesInfo = RoutesLoader.getModulesInfo(modulesConfig, appConfig.apiPrefix);
+  const endpointsDocs = RoutesLoader.generateEndpointsDoc(modulesConfig, appConfig.apiPrefix);
+
   res.json({
     name: 'Sistema Integral de Gestión Comercial',
     version: '1.0.0',
     description: 'API REST para gestión comercial completa',
     environment: appConfig.env,
     apiPrefix: appConfig.apiPrefix,
+    
+    modules: {
+      total: modulesInfo.length,
+      loaded: modulesInfo
+    },
+
     endpoints: {
       health: '/health',
-      settings: `${appConfig.apiPrefix}/settings`,
-      // TODO: Agregar más endpoints aquí conforme se desarrollen
+      documentation: '/',
+      api: appConfig.apiPrefix
+    },
+
+    documentation: endpointsDocs,
+
+    quickStart: {
+      login: {
+        method: 'POST',
+        url: `${appConfig.apiPrefix}/auth/login`,
+        body: {
+          username: 'admin',
+          password: 'Admin123'
+        }
+      },
+      getProfile: {
+        method: 'GET',
+        url: `${appConfig.apiPrefix}/auth/profile`,
+        headers: {
+          Authorization: 'Bearer <token>'
+        }
+      }
+    }
+  });
+});
+
+/**
+ * GET /api/v1/modules
+ * Listar todos los módulos disponibles
+ */
+app.get(`${appConfig.apiPrefix}/modules`, (req, res) => {
+  const modulesInfo = RoutesLoader.getModulesInfo(modulesConfig, appConfig.apiPrefix);
+
+  res.json({
+    success: true,
+    data: {
+      total: modulesInfo.length,
+      modules: modulesInfo
     }
   });
 });
 
 // ============================================
-// RUTAS DE LA API
+// CARGAR RUTAS DE MÓDULOS AUTOMÁTICAMENTE
 // ============================================
 
-// Módulo: Configuración del Sistema
-app.use(`${appConfig.apiPrefix}/settings`, settingRoutes);
+logger.info('🚀 Iniciando aplicación...');
 
-// TODO: Agregar más rutas de módulos aquí
-// app.use(`${appConfig.apiPrefix}/auth`, authRoutes);
-// app.use(`${appConfig.apiPrefix}/users`, userRoutes);
-// etc...
+// Cargar todas las rutas de módulos
+const loadResult = RoutesLoader.loadModuleRoutes(
+  app,
+  modulesConfig,
+  appConfig.apiPrefix
+);
+
+if (loadResult.errors > 0) {
+  logger.warn(`⚠️  Se encontraron ${loadResult.errors} errores al cargar módulos`);
+}
+
+logger.success(`✅ Aplicación configurada exitosamente`);
+logger.info(`📦 Módulos cargados: ${loadResult.loaded}/${loadResult.total}`);
 
 // ============================================
 // MANEJO DE ERRORES

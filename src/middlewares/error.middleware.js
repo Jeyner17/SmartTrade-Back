@@ -83,6 +83,11 @@ const errorHandler = (err, req, res, next) => {
     return ApiResponse.error(res, 'Error al procesar el archivo', 400);
   }
 
+   // Errores de autenticación JWT
+  if (err.name === 'UnauthorizedError') {
+    return ApiResponse.unauthorized(res, 'Token inválido o expirado');
+  }
+
   // Error de JWT
   if (err.name === 'JsonWebTokenError') {
     return ApiResponse.unauthorized(res, 'Token inválido');
