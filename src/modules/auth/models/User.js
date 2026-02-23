@@ -129,12 +129,35 @@ module.exports = (sequelize) => {
       allowNull: true,
       field: 'lock_until',
       comment: 'Fecha hasta la cual la cuenta está bloqueada'
+    },
+
+    mustChangePassword: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'must_change_password',
+      comment: 'Forzar cambio de contraseña en próximo login'
+    },
+
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'created_by',
+      comment: 'ID del usuario que creó este registro'
+    },
+
+    updatedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'updated_by',
+      comment: 'ID del usuario que actualizó este registro'
     }
   }, {
     tableName: 'users',
     schema: SCHEMA,
     timestamps: true,
     underscored: true,
+    paranoid: true,
     
     indexes: [
       {

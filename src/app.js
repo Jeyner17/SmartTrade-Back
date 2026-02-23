@@ -2,10 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
 
 // Configuraciones
 const appConfig = require('./config/app');
 const modulesConfig = require('./config/modules.config');
+const swaggerSpec = require('./config/swagger');
 
 // Middlewares globales
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
@@ -29,8 +31,10 @@ const app = express();
 // ============================================
 
 // Helmet - Headers de seguridad
+// CSP desactivado globalmente para permitir Swagger UI (assets inline)
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false
 }));
 
 // CORS - Permitir peticiones de otros dominios
@@ -66,6 +70,41 @@ app.use(sanitizeInput);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ============================================
+// DOCUMENTACIÓN SWAGGER UI
+// ============================================
+
+/**
+ * GET /api/docs
+ * Documentación interactiva de la API (Swagger UI)
+ */
+app.use('/api/docs', swaggerUi.serve);
+app.get('/api/docs', swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'SmartTrade API Docs',
+  customCss: `
+    .swagger-ui .topbar { background-color: #1a1a2e; }
+    .swagger-ui .topbar .download-url-wrapper { display: none; }
+    .swagger-ui .info .title { color: #1a1a2e; }
+  `,
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    tryItOutEnabled: true,
+    defaultModelsExpandDepth: 1,
+    defaultModelExpandDepth: 2
+  }
+}));
+
+/**
+ * GET /api/docs.json
+ * Spec OpenAPI en formato JSON (para importar en Postman, Insomnia, etc.)
+ */
+app.get('/api/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json(swaggerSpec);
+});
+
+// ============================================
 // RUTAS DE SALUD Y INFO
 // ============================================
 
@@ -98,7 +137,7 @@ app.get('/', (req, res) => {
     description: 'API REST para gestión comercial completa',
     environment: appConfig.env,
     apiPrefix: appConfig.apiPrefix,
-    
+
     modules: {
       total: modulesInfo.length,
       loaded: modulesInfo
@@ -106,7 +145,8 @@ app.get('/', (req, res) => {
 
     endpoints: {
       health: '/health',
-      documentation: '/',
+      documentation: '/api/docs',
+      openApiSpec: '/api/docs.json',
       api: appConfig.apiPrefix
     },
 

@@ -46,30 +46,30 @@ const modules = [
   },
 
   // ==========================================
-  // SPRINT 3: GESTIÓN DE USUARIOS (Ejemplo futuro)
+  // SPRINT 3: GESTIÓN DE USUARIOS
   // ==========================================
-  // {
-  //   name: 'users',
-  //   route: '/users',
-  //   path: '../modules/users/routes/user.routes',
-  //   enabled: false, // Deshabilitado hasta que se implemente
-  //   description: 'Gestión de usuarios del sistema',
-  //   version: '1.0.0',
-  //   sprint: 3
-  // },
+  {
+    name: 'users',
+    route: '/users',
+    path: '../modules/users/routes/user.routes',
+    enabled: true,
+    description: 'Gestión de usuarios del sistema',
+    version: '1.0.0',
+    sprint: 3
+  },
 
   // ==========================================
-  // SPRINT 4: GESTIÓN DE EMPLEADOS (Ejemplo futuro)
+  // SPRINT 4: GESTIÓN DE EMPLEADOS
   // ==========================================
-  // {
-  //   name: 'employees',
-  //   route: '/employees',
-  //   path: '../modules/employees/routes/employee.routes',
-  //   enabled: false,
-  //   description: 'Gestión de empleados',
-  //   version: '1.0.0',
-  //   sprint: 4
-  // },
+  {
+    name: 'employees',
+    route: '/employees',
+    path: '../modules/employees/routes/employee.routes',
+    enabled: true,
+    description: 'Gestión de empleados y asistencia',
+    version: '1.0.0',
+    sprint: 4
+  },
 
   // ==========================================
   // SPRINT 5: CATEGORÍAS (Ejemplo futuro)
