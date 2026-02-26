@@ -41,6 +41,17 @@ router.use(authMiddleware);
 // ============================================
 
 /**
+ * GET /api/v1/users/roles
+ * Obtener roles disponibles para asignar a un usuario (para formularios de creación/edición)
+ * Permiso: users:create o users:edit
+ */
+router.get(
+  '/roles',
+  requirePermission(MODULES.USERS, ACTIONS.VIEW),
+  asyncHandler(userController.getAvailableRoles)
+);
+
+/**
  * POST /api/v1/users/check-availability
  * Verificar si username o email están disponibles
  * Body: { username?, email?, excludeId? }

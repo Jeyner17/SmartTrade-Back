@@ -204,9 +204,8 @@ const validateCheckAvailability = [
   body('email')
     .optional()
     .trim()
-    .isEmail()
-    .withMessage('El formato del email es inválido')
-    .normalizeEmail(),
+    .isLength({ max: 254 })
+    .withMessage('El email es demasiado largo'),
 
   body('excludeId')
     .optional()

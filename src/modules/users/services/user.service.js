@@ -391,16 +391,38 @@ class UserService {
     }
 
     if (email) {
-      const where = { email };
-      if (excludeId) where.id = { [Op.ne]: excludeId };
-      const existing = await User.findOne({ where });
-      result.email = {
-        available: !existing,
-        value: email
-      };
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(email)) {
+        const where = { email };
+        if (excludeId) where.id = { [Op.ne]: excludeId };
+        const existing = await User.findOne({ where });
+        result.email = {
+          available: !existing,
+          value: email
+        };
+      } else {
+        result.email = {
+          available: null,
+          value: email
+        };
+      }
     }
 
     return result;
+  }
+
+  /**
+   * Obtener roles disponibles para asignar a un usuario
+   * @returns {Promise<Array>} Lista de roles activos
+   */
+  async getAvailableRoles() {
+    const roles = await Role.findAll({
+      where: { isActive: true },
+      attributes: ['id', 'name', 'description'],
+      order: [['name', 'ASC']]
+    });
+
+    return roles;
   }
 
   /**

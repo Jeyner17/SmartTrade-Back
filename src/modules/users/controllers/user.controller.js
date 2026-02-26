@@ -40,7 +40,7 @@ class UserController {
   async getUserById(req, res) {
     try {
       const user = await userService.getUserById(parseInt(req.params.id));
-      return ApiResponse.success(res, user, 'Usuario obtenido exitosamente');
+      return ApiResponse.success(res, { user }, 'Usuario obtenido exitosamente');
 
     } catch (error) {
       logger.error('Error en getUserById:', error);
@@ -93,7 +93,7 @@ class UserController {
         req.user.id
       );
 
-      return ApiResponse.success(res, user, 'Usuario actualizado exitosamente');
+      return ApiResponse.success(res, { user }, 'Usuario actualizado exitosamente');
 
     } catch (error) {
       logger.error('Error en updateUser:', error);
@@ -233,6 +233,21 @@ class UserController {
     } catch (error) {
       logger.error('Error en logoutAllSessions:', error);
       return ApiResponse.error(res, 'Error al cerrar sesiones');
+    }
+  }
+
+  /**
+   * GET /api/v1/users/roles
+   * Obtener roles disponibles para asignar al crear/editar un usuario
+   */
+  async getAvailableRoles(req, res) {
+    try {
+      const roles = await userService.getAvailableRoles();
+      return ApiResponse.success(res, roles, 'Roles obtenidos exitosamente');
+
+    } catch (error) {
+      logger.error('Error en getAvailableRoles:', error);
+      return ApiResponse.error(res, 'Error al obtener roles');
     }
   }
 
