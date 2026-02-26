@@ -36,8 +36,10 @@ const sanitizeObject = (obj) => {
 
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
-      // Escape de caracteres HTML peligrosos
-      sanitized[key] = validator.escape(value);
+      // Escape de caracteres HTML peligrosos.
+      // Se restaura '/' (&#x2F;) porque es seguro en contexto JSON/API
+      // y su escape rompería valores como 'DD/MM/YYYY' o URLs.
+      sanitized[key] = validator.escape(value).replace(/&#x2F;/g, '/');
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       sanitized[key] = sanitizeObject(value);
     } else if (Array.isArray(value)) {

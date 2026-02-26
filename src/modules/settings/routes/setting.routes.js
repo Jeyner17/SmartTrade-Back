@@ -78,7 +78,6 @@ router.get(
 router.put(
   '/',
   requirePermission(MODULES.SETTINGS, ACTIONS.EDIT),
-  sanitizeInput,
   validateNotEmptyBody,
   validateUpdateConfiguration,
   validate,

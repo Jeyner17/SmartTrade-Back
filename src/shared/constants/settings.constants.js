@@ -72,7 +72,7 @@ const DEFAULT_VALUES = {
   // Fiscal
   COUNTRY: 'EC',
   CURRENCY: 'USD',
-  TAX_REGIME: 'GENERAL',
+  TAX_REGIME: 'Régimen General',
   IVA_PERCENTAGE: 15,
   
   // Negocio
@@ -84,7 +84,7 @@ const DEFAULT_VALUES = {
   SESSION_TIMEOUT_MINUTES: 120,
   LOG_RETENTION_DAYS: 90,
   DATE_FORMAT: 'DD/MM/YYYY',
-  TIME_FORMAT: '24H',
+  TIME_FORMAT: '24h',
   
   // Backup
   BACKUP_ENABLED: true,

@@ -82,6 +82,7 @@ const displayServerInfo = () => {
   logger.info(`  🔗 API Base:          http://localhost:${PORT}${appConfig.apiPrefix}`);
   logger.info(`  🏥 Health Check:      http://localhost:${PORT}/health`);
   logger.info(`  📚 Documentación:     http://localhost:${PORT}/`);
+  logger.info(`  📖 Swagger UI:        http://localhost:${PORT}/api/docs`);
   logger.info(`  📦 Módulos Info:      http://localhost:${PORT}${appConfig.apiPrefix}/modules`);
   logger.info(`  📍 Entorno:           ${appConfig.env}`);
   logger.info('─'.repeat(60));

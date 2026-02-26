@@ -6,6 +6,7 @@ const {
   COUNTRIES,
   CURRENCIES,
   TAX_REGIMES,
+  TIME_FORMATS,
   BACKUP_FREQUENCIES
 } = require('../../../shared/constants/settings.constants');
 const { calculateNextBackup } = require('../../../utils/date.util');
@@ -49,6 +50,14 @@ class SettingService {
           lastUpdated: setting.updatedAt
         };
       });
+
+      // Normalizar valores que pudieron haberse guardado como claves en lugar de valores
+      if (configuration.fiscal?.taxRegime && TAX_REGIMES[configuration.fiscal.taxRegime]) {
+        configuration.fiscal.taxRegime = TAX_REGIMES[configuration.fiscal.taxRegime];
+      }
+      if (configuration.technical?.timeFormat && TIME_FORMATS[configuration.technical.timeFormat]) {
+        configuration.technical.timeFormat = TIME_FORMATS[configuration.technical.timeFormat];
+      }
 
       logger.info('Configuración general obtenida exitosamente');
       return configuration;
