@@ -42,6 +42,13 @@ const PasswordReset = require('../modules/users/models/PasswordReset')(sequelize
 const Employee   = require('../modules/employees/models/Employee')(sequelize);
 const Attendance = require('../modules/employees/models/Attendance')(sequelize);
 
+// Módulo: Categories (Sprint 5)
+const Category = require('../modules/categories/models/Category')(sequelize);
+
+// Módulo: Products (Sprint 6)
+const Product      = require('../modules/products/models/Product')(sequelize);
+const PriceHistory = require('../modules/products/models/PriceHistory')(sequelize);
+
 // ============================================
 // DEFINIR RELACIONES
 // ============================================
@@ -100,6 +107,53 @@ Attendance.belongsTo(Employee, {
   as: 'employee'
 });
 
+// Category auto-referencia: padre → hijos
+Category.belongsTo(Category, {
+  foreignKey: 'parentId',
+  as: 'parent'
+});
+
+Category.hasMany(Category, {
+  foreignKey: 'parentId',
+  as: 'children'
+});
+
+// Category tiene muchos Products
+Category.hasMany(Product, {
+  foreignKey: 'categoryId',
+  as: 'products'
+});
+
+// Product pertenece a Category
+Product.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  as: 'category'
+});
+
+// Product tiene muchos PriceHistory
+Product.hasMany(PriceHistory, {
+  foreignKey: 'productId',
+  as: 'priceHistory'
+});
+
+// PriceHistory pertenece a Product
+PriceHistory.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
+});
+
+// User tiene muchos PriceHistory (cambios de precio realizados)
+User.hasMany(PriceHistory, {
+  foreignKey: 'changedBy',
+  as: 'priceChanges'
+});
+
+// PriceHistory pertenece a User (quien cambió el precio)
+PriceHistory.belongsTo(User, {
+  foreignKey: 'changedBy',
+  as: 'changedByUser'
+});
+
 // ============================================
 // EXPORTAR
 // ============================================
@@ -121,7 +175,14 @@ const db = {
 
   // Modelos Employees
   Employee,
-  Attendance
+  Attendance,
+
+  // Modelos Categories
+  Category,
+
+  // Modelos Products
+  Product,
+  PriceHistory
 };
 
 module.exports = db;

@@ -72,30 +72,30 @@ const modules = [
   },
 
   // ==========================================
-  // SPRINT 5: CATEGORÍAS (Ejemplo futuro)
+  // SPRINT 5: GESTIÓN DE CATEGORÍAS
   // ==========================================
-  // {
-  //   name: 'categories',
-  //   route: '/categories',
-  //   path: '../modules/categories/routes/category.routes',
-  //   enabled: false,
-  //   description: 'Gestión de categorías de productos',
-  //   version: '1.0.0',
-  //   sprint: 5
-  // },
+  {
+    name: 'categories',
+    route: '/categories',
+    path: '../modules/categories/routes/category.routes',
+    enabled: true,
+    description: 'Gestión de categorías de productos',
+    version: '1.0.0',
+    sprint: 5
+  },
 
   // ==========================================
-  // SPRINT 6: PRODUCTOS (Ejemplo futuro)
+  // SPRINT 6: GESTIÓN DE PRODUCTOS
   // ==========================================
-  // {
-  //   name: 'products',
-  //   route: '/products',
-  //   path: '../modules/products/routes/product.routes',
-  //   enabled: false,
-  //   description: 'Gestión de productos',
-  //   version: '1.0.0',
-  //   sprint: 6
-  // },
+  {
+    name: 'products',
+    route: '/products',
+    path: '../modules/products/routes/product.routes',
+    enabled: true,
+    description: 'Gestión de productos del catálogo',
+    version: '1.0.0',
+    sprint: 6
+  },
 
   // ==========================================
   // SPRINT 7: INVENTARIO (Ejemplo futuro)

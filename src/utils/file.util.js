@@ -96,9 +96,49 @@ const fileExists = async (filePath) => {
   }
 };
 
+// ============================================
+// IMÁGENES DE PRODUCTOS (Sprint 6)
+// ============================================
+
+const productStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads/products');
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `product-${uniqueSuffix}${ext}`);
+  }
+});
+
+const productFileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Formato no válido. Use JPG, PNG o WebP'), false);
+  }
+};
+
+const uploadProductImage = multer({
+  storage: productStorage,
+  fileFilter: productFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
+
+const getProductImageUrl = (filename) => `/uploads/products/${filename}`;
+
 module.exports = {
   uploadLogo,
+  uploadProductImage,
   deleteFile,
   getFileUrl,
+  getProductImageUrl,
   fileExists
 };
