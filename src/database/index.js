@@ -39,15 +39,20 @@ const RefreshToken = require('../modules/auth/models/RefreshToken')(sequelize);
 const PasswordReset = require('../modules/users/models/PasswordReset')(sequelize);
 
 // Módulo: Employees (Sprint 4)
-const Employee   = require('../modules/employees/models/Employee')(sequelize);
+const Employee = require('../modules/employees/models/Employee')(sequelize);
 const Attendance = require('../modules/employees/models/Attendance')(sequelize);
 
 // Módulo: Categories (Sprint 5)
 const Category = require('../modules/categories/models/Category')(sequelize);
 
 // Módulo: Products (Sprint 6)
-const Product      = require('../modules/products/models/Product')(sequelize);
+const Product = require('../modules/products/models/Product')(sequelize);
 const PriceHistory = require('../modules/products/models/PriceHistory')(sequelize);
+
+// Módulo: Suppliers (Sprint 8)
+const Supplier = require('../modules/suppliers/models/Supplier')(sequelize);
+const SupplierContact = require('../modules/suppliers/models/SupplierContact')(sequelize);
+const SupplierEvaluation = require('../modules/suppliers/models/SupplierEvaluation')(sequelize);
 
 // ============================================
 // DEFINIR RELACIONES
@@ -155,6 +160,34 @@ PriceHistory.belongsTo(User, {
 });
 
 // ============================================
+// RELACIONES SUPPLIERS (Sprint 8)
+// ============================================
+
+// Supplier tiene muchos SupplierContact
+Supplier.hasMany(SupplierContact, {
+  foreignKey: 'supplierId',
+  as: 'contacts'
+});
+
+// SupplierContact pertenece a Supplier
+SupplierContact.belongsTo(Supplier, {
+  foreignKey: 'supplierId',
+  as: 'supplier'
+});
+
+// Supplier tiene muchas SupplierEvaluation
+Supplier.hasMany(SupplierEvaluation, {
+  foreignKey: 'supplierId',
+  as: 'evaluations'
+});
+
+// SupplierEvaluation pertenece a Supplier
+SupplierEvaluation.belongsTo(Supplier, {
+  foreignKey: 'supplierId',
+  as: 'supplier'
+});
+
+// ============================================
 // EXPORTAR
 // ============================================
 
@@ -182,7 +215,12 @@ const db = {
 
   // Modelos Products
   Product,
-  PriceHistory
+  PriceHistory,
+
+  // Modelos Suppliers
+  Supplier,
+  SupplierContact,
+  SupplierEvaluation
 };
 
 module.exports = db;

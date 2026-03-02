@@ -111,17 +111,17 @@ const modules = [
   // },
 
   // ==========================================
-  // SPRINT 8: PROVEEDORES (Ejemplo futuro)
+  // SPRINT 8: PROVEEDORES
   // ==========================================
-  // {
-  //   name: 'suppliers',
-  //   route: '/suppliers',
-  //   path: '../modules/suppliers/routes/supplier.routes',
-  //   enabled: false,
-  //   description: 'Gestión de proveedores',
-  //   version: '1.0.0',
-  //   sprint: 8
-  // },
+  {
+    name: 'suppliers',
+    route: '/suppliers',
+    path: '../modules/suppliers/routes/supplier.routes',
+    enabled: true,
+    description: 'Gestión de proveedores',
+    version: '1.0.0',
+    sprint: 8
+  },
 
   // ==========================================
   // SPRINT 9: COMPRAS (Ejemplo futuro)
