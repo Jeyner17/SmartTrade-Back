@@ -59,133 +59,47 @@ const SupplierEvaluation = require('../modules/suppliers/models/SupplierEvaluati
 // ============================================
 
 // User pertenece a Role
-User.belongsTo(Role, {
-  foreignKey: 'roleId',
-  as: 'role'
-});
+User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
+Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });
 
-// Role tiene muchos Users
-Role.hasMany(User, {
-  foreignKey: 'roleId',
-  as: 'users'
-});
+// User ↔ RefreshToken
+User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-// User tiene muchos RefreshTokens
-User.hasMany(RefreshToken, {
-  foreignKey: 'userId',
-  as: 'refreshTokens'
-});
+// User ↔ PasswordReset
+User.hasMany(PasswordReset, { foreignKey: 'userId', as: 'passwordResets' });
+PasswordReset.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-// RefreshToken pertenece a User
-RefreshToken.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
+// Employee ↔ User
+Employee.belongsTo(User, { foreignKey: 'userId', as: 'linkedUser' });
 
-// User tiene muchos PasswordResets
-User.hasMany(PasswordReset, {
-  foreignKey: 'userId',
-  as: 'passwordResets'
-});
+// Employee ↔ Attendance
+Employee.hasMany(Attendance, { foreignKey: 'employeeId', as: 'attendanceRecords' });
+Attendance.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
 
-// PasswordReset pertenece a User
-PasswordReset.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
+// Category auto-referencia
+Category.belongsTo(Category, { foreignKey: 'parentId', as: 'parent' });
+Category.hasMany(Category, { foreignKey: 'parentId', as: 'children' });
 
-// Employee pertenece a User (usuario vinculado del sistema)
-Employee.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'linkedUser'
-});
+// Category ↔ Product
+Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
+Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 
-// Employee tiene muchos registros de Attendance
-Employee.hasMany(Attendance, {
-  foreignKey: 'employeeId',
-  as: 'attendanceRecords'
-});
+// Product ↔ PriceHistory
+Product.hasMany(PriceHistory, { foreignKey: 'productId', as: 'priceHistory' });
+PriceHistory.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
-// Attendance pertenece a Employee
-Attendance.belongsTo(Employee, {
-  foreignKey: 'employeeId',
-  as: 'employee'
-});
+// User ↔ PriceHistory
+User.hasMany(PriceHistory, { foreignKey: 'changedBy', as: 'priceChanges' });
+PriceHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUser' });
 
-// Category auto-referencia: padre → hijos
-Category.belongsTo(Category, {
-  foreignKey: 'parentId',
-  as: 'parent'
-});
+// Supplier ↔ SupplierContact
+Supplier.hasMany(SupplierContact, { foreignKey: 'supplierId', as: 'contacts' });
+SupplierContact.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
 
-Category.hasMany(Category, {
-  foreignKey: 'parentId',
-  as: 'children'
-});
-
-// Category tiene muchos Products
-Category.hasMany(Product, {
-  foreignKey: 'categoryId',
-  as: 'products'
-});
-
-// Product pertenece a Category
-Product.belongsTo(Category, {
-  foreignKey: 'categoryId',
-  as: 'category'
-});
-
-// Product tiene muchos PriceHistory
-Product.hasMany(PriceHistory, {
-  foreignKey: 'productId',
-  as: 'priceHistory'
-});
-
-// PriceHistory pertenece a Product
-PriceHistory.belongsTo(Product, {
-  foreignKey: 'productId',
-  as: 'product'
-});
-
-// User tiene muchos PriceHistory (cambios de precio realizados)
-User.hasMany(PriceHistory, {
-  foreignKey: 'changedBy',
-  as: 'priceChanges'
-});
-
-// PriceHistory pertenece a User (quien cambió el precio)
-PriceHistory.belongsTo(User, {
-  foreignKey: 'changedBy',
-  as: 'changedByUser'
-});
-
-// ============================================
-// RELACIONES SUPPLIERS (Sprint 8)
-// ============================================
-
-// Supplier tiene muchos SupplierContact
-Supplier.hasMany(SupplierContact, {
-  foreignKey: 'supplierId',
-  as: 'contacts'
-});
-
-// SupplierContact pertenece a Supplier
-SupplierContact.belongsTo(Supplier, {
-  foreignKey: 'supplierId',
-  as: 'supplier'
-});
-
-// Supplier tiene muchas SupplierEvaluation
-Supplier.hasMany(SupplierEvaluation, {
-  foreignKey: 'supplierId',
-  as: 'evaluations'
-});
-
-// SupplierEvaluation pertenece a Supplier
-SupplierEvaluation.belongsTo(Supplier, {
-  foreignKey: 'supplierId',
-  as: 'supplier'
-});
+// Supplier ↔ SupplierEvaluation
+Supplier.hasMany(SupplierEvaluation, { foreignKey: 'supplierId', as: 'evaluations' });
+SupplierEvaluation.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
 
 // ============================================
 // EXPORTAR
@@ -195,29 +109,29 @@ const db = {
   sequelize,
   Sequelize,
 
-  // Modelos Settings
+  // Settings
   Setting,
 
-  // Modelos Auth
+  // Auth
   Role,
   User,
   RefreshToken,
 
-  // Modelos Users
+  // Users
   PasswordReset,
 
-  // Modelos Employees
+  // Employees
   Employee,
   Attendance,
 
-  // Modelos Categories
+  // Categories
   Category,
 
-  // Modelos Products
+  // Products
   Product,
   PriceHistory,
 
-  // Modelos Suppliers
+  // Suppliers
   Supplier,
   SupplierContact,
   SupplierEvaluation

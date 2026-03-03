@@ -18,12 +18,9 @@ const PORT = appConfig.port;
 const checkDatabaseConnection = async () => {
   try {
     await db.sequelize.authenticate();
-    logger.success('✅ Conexión a base de datos establecida');
-    logger.info(`📊 Base de datos: ${db.sequelize.config.database}`);
-    logger.info(`🔧 Dialecto: ${db.sequelize.config.dialect}`);
     return true;
   } catch (error) {
-    logger.error('❌ Error al conectar a la base de datos:', error);
+    logger.error('❌ Error al conectar a la base de datos:', error.message);
     return false;
   }
 };
@@ -34,11 +31,9 @@ const checkDatabaseConnection = async () => {
 const syncModels = async () => {
   if (process.env.NODE_ENV === 'development') {
     try {
-      logger.info('🔄 Verificando sincronización de modelos...');
       await db.sequelize.sync({ alter: false });
-      logger.success('✅ Modelos sincronizados');
     } catch (error) {
-      logger.error('❌ Error al sincronizar modelos:', error);
+      logger.error('❌ Error al sincronizar modelos:', error.message);
       throw error;
     }
   }
@@ -47,123 +42,40 @@ const syncModels = async () => {
 /**
  * Mostrar información de módulos cargados
  */
-const displayModulesInfo = () => {
-  const enabledModules = modulesConfig.filter(m => m.enabled);
-  const disabledModules = modulesConfig.filter(m => !m.enabled);
-
-  logger.info('');
-  logger.info('📦 MÓDULOS CARGADOS:');
-  logger.info('─'.repeat(60));
-
-  enabledModules.forEach(module => {
-    logger.info(`  ✅ ${module.name.padEnd(15)} | Sprint ${module.sprint} | ${appConfig.apiPrefix}${module.route}`);
-  });
-
-  if (disabledModules.length > 0) {
-    logger.info('');
-    logger.info('⏸️  MÓDULOS DESHABILITADOS:');
-    logger.info('─'.repeat(60));
-    disabledModules.forEach(module => {
-      logger.debug(`  ⏸️  ${module.name.padEnd(15)} | Sprint ${module.sprint} | ${module.description}`);
-    });
-  }
-
-  logger.info('─'.repeat(60));
-};
-
-/**
- * Mostrar información del servidor
- */
-const displayServerInfo = () => {
-  logger.info('');
-  logger.info('🌐 SERVIDOR ACTIVO:');
-  logger.info('─'.repeat(60));
-  logger.info(`  🔗 URL Base:          http://localhost:${PORT}`);
-  logger.info(`  🔗 API Base:          http://localhost:${PORT}${appConfig.apiPrefix}`);
-  logger.info(`  🏥 Health Check:      http://localhost:${PORT}/health`);
-  logger.info(`  📚 Documentación:     http://localhost:${PORT}/`);
-  logger.info(`  📖 Swagger UI:        http://localhost:${PORT}/api/docs`);
-  logger.info(`  📦 Módulos Info:      http://localhost:${PORT}${appConfig.apiPrefix}/modules`);
-  logger.info(`  📍 Entorno:           ${appConfig.env}`);
-  logger.info('─'.repeat(60));
-  logger.info('');
-  logger.success('✨ Sistema listo para recibir peticiones');
-  logger.info('💡 Presiona CTRL+C para detener el servidor');
-  logger.info('');
-};
+// (funciones de display eliminadas - output simplificado)
 
 /**
  * Función principal para iniciar el servidor
  */
 const startServer = async () => {
   try {
-    logger.info('');
-    logger.info('═'.repeat(60));
-    logger.info('  SISTEMA INTEGRAL DE GESTIÓN COMERCIAL');
-    logger.info('  Versión 1.0.0');
-    logger.info('═'.repeat(60));
-    logger.info('');
-
-    // ============================================
-    // VERIFICAR CONEXIÓN A BASE DE DATOS
-    // ============================================
-    
-    logger.info('🔍 Verificando conexión a base de datos...');
     const dbConnected = await checkDatabaseConnection();
 
     if (!dbConnected) {
       throw new Error('No se pudo establecer conexión con la base de datos');
     }
 
-    // ============================================
-    // SINCRONIZAR MODELOS
-    // ============================================
-    
     await syncModels();
 
-    // ============================================
-    // INICIAR SERVIDOR HTTP
-    // ============================================
-    
     const server = app.listen(PORT, () => {
-      logger.success(`🚀 Servidor HTTP iniciado en puerto ${PORT}`);
-      
-      // Mostrar información de módulos
-      displayModulesInfo();
-      // Mostrar información del servidor
-      displayServerInfo();
+      logger.success(`🚀 SmartTrade API corriendo en http://localhost:${PORT}${appConfig.apiPrefix}`);
     });
 
     // ============================================
     // MANEJO DE CIERRE GRACEFUL
     // ============================================
-    
+
     const gracefulShutdown = async (signal) => {
-      logger.warn('');
-      logger.warn('═'.repeat(60));
-      logger.warn(`  ${signal} recibido - Iniciando cierre graceful`);
-      logger.warn('═'.repeat(60));
-      
       server.close(async () => {
-        logger.info('✅ Servidor HTTP cerrado');
-        
         try {
           await db.sequelize.close();
-          logger.info('✅ Conexión a base de datos cerrada');
-          logger.success('✅ Sistema cerrado correctamente');
-          logger.info('');
+          logger.info('👋 Servidor detenido');
           process.exit(0);
         } catch (error) {
-          logger.error('❌ Error al cerrar conexión a base de datos:', error);
           process.exit(1);
         }
       });
-
-      // Forzar cierre después de 10 segundos
-      setTimeout(() => {
-        logger.error('⚠️  Tiempo de espera excedido, forzando cierre...');
-        process.exit(1);
-      }, 10000);
+      setTimeout(() => process.exit(1), 10000);
     };
 
     // Escuchar señales de terminación
@@ -193,7 +105,7 @@ process.on('unhandledRejection', (reason, promise) => {
   logger.error('Promise:', promise);
   logger.error('Razón:', reason);
   logger.error('');
-  
+
   if (process.env.NODE_ENV === 'production') {
     process.exit(1);
   }

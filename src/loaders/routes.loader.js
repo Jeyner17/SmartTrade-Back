@@ -14,56 +14,25 @@ class RoutesLoader {
    * @param {string} apiPrefix - Prefijo de la API
    */
   static loadModuleRoutes(app, modules, apiPrefix) {
-    logger.info('🔄 Iniciando carga de módulos...');
-
     let loadedCount = 0;
     let disabledCount = 0;
     let errorCount = 0;
 
     modules.forEach(module => {
-      // Verificar si el módulo está habilitado
       if (!module.enabled) {
-        logger.debug(`⏸️  Módulo deshabilitado: ${module.name}`, {
-          sprint: module.sprint,
-          version: module.version
-        });
         disabledCount++;
         return;
       }
 
       try {
-        // Cargar el archivo de rutas
         const routes = require(module.path);
-
-        // Registrar las rutas con el prefijo
         const fullRoute = `${apiPrefix}${module.route}`;
         app.use(fullRoute, routes);
-
-        logger.success(`✅ Módulo cargado: ${module.name}`, {
-          route: fullRoute,
-          description: module.description,
-          sprint: module.sprint,
-          version: module.version,
-          public: module.public || false
-        });
-
         loadedCount++;
-
       } catch (error) {
-        logger.error(`❌ Error al cargar módulo: ${module.name}`, {
-          error: error.message,
-          path: module.path
-        });
+        logger.error(`❌ Error al cargar módulo: ${module.name} - ${error.message}`);
         errorCount++;
       }
-    });
-
-    // Resumen de carga
-    logger.info('📊 Resumen de carga de módulos:', {
-      total: modules.length,
-      cargados: loadedCount,
-      deshabilitados: disabledCount,
-      errores: errorCount
     });
 
     return {

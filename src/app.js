@@ -192,8 +192,6 @@ app.get(`${appConfig.apiPrefix}/modules`, (req, res) => {
 // CARGAR RUTAS DE MÓDULOS AUTOMÁTICAMENTE
 // ============================================
 
-logger.info('🚀 Iniciando aplicación...');
-
 // Cargar todas las rutas de módulos
 const loadResult = RoutesLoader.loadModuleRoutes(
   app,
@@ -204,9 +202,6 @@ const loadResult = RoutesLoader.loadModuleRoutes(
 if (loadResult.errors > 0) {
   logger.warn(`⚠️  Se encontraron ${loadResult.errors} errores al cargar módulos`);
 }
-
-logger.success(`✅ Aplicación configurada exitosamente`);
-logger.info(`📦 Módulos cargados: ${loadResult.loaded}/${loadResult.total}`);
 
 // ============================================
 // MANEJO DE ERRORES
