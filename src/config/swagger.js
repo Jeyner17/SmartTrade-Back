@@ -30,6 +30,9 @@ Usa **JWT Bearer Token**. Para obtener tu token:
 | 2 | Roles | ✅ Activo |
 | 3 | Users | ✅ Activo |
 | 4 | Employees | ✅ Activo |
+| 5 | Categories | ✅ Activo |
+| 6 | Products | ✅ Activo |
+| 7 | Inventory | ✅ Activo |
     `,
     contact: {
       name: 'LionTech',
@@ -78,6 +81,18 @@ Usa **JWT Bearer Token**. Para obtener tu token:
     {
       name: 'Employees',
       description: 'CRUD de empleados, vinculación con usuarios del sistema y registro de asistencia diaria'
+    },
+    {
+      name: 'Categories',
+      description: 'Gestión de categorías jerárquicas para clasificación de productos'
+    },
+    {
+      name: 'Products',
+      description: 'Catálogo de productos con precios, costos, stock e imágenes'
+    },
+    {
+      name: 'Inventory',
+      description: 'Gestión de inventario: control de stock, movimientos, ajustes, alertas y valorización'
     }
   ],
 
@@ -444,6 +459,258 @@ Usa **JWT Bearer Token**. Para obtener tu token:
           status: { type: 'string', enum: ['absent', 'present', 'completed'], example: 'present', description: 'absent=sin registro, present=solo entrada, completed=entrada+salida' },
           nextAction: { type: 'string', enum: ['entry', 'exit'], nullable: true, example: 'exit' },
           record: { $ref: '#/components/schemas/AttendanceRecord' }
+        }
+      },
+
+      // --- CATEGORIES ---
+      Category: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Electrónica' },
+          description: { type: 'string', nullable: true, example: 'Dispositivos electrónicos y accesorios' },
+          parentId: { type: 'integer', nullable: true, example: null },
+          level: { type: 'integer', example: 0 },
+          isActive: { type: 'boolean', example: true },
+          parent: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              name: { type: 'string', example: 'Categoría Padre' }
+            }
+          },
+          children: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer', example: 5 },
+                name: { type: 'string', example: 'Laptops' },
+                level: { type: 'integer', example: 1 }
+              }
+            }
+          },
+          productsCount: { type: 'integer', example: 25 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreateCategoryRequest: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', maxLength: 200, example: 'Electrónica' },
+          description: { type: 'string', nullable: true, example: 'Dispositivos electrónicos y accesorios' },
+          parentId: { type: 'integer', nullable: true, example: null }
+        }
+      },
+      UpdateCategoryRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', maxLength: 200, example: 'Electrónica y Tecnología' },
+          description: { type: 'string', nullable: true, example: 'Descripción actualizada' },
+          parentId: { type: 'integer', nullable: true, example: null }
+        }
+      },
+
+      // --- PRODUCTS ---
+      Product: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Laptop HP 15-DY' },
+          description: { type: 'string', nullable: true, example: 'Laptop HP 15 pulgadas, 8GB RAM, 256GB SSD' },
+          sku: { type: 'string', nullable: true, example: 'LAP-HP-001' },
+          barcode: { type: 'string', nullable: true, example: '7891234567890' },
+          price: { type: 'number', format: 'float', example: 650.00 },
+          cost: { type: 'number', format: 'float', nullable: true, example: 450.00 },
+          taxPercent: { type: 'number', format: 'float', example: 15.00 },
+          imageUrl: { type: 'string', nullable: true, example: '/uploads/products/laptop-hp.jpg' },
+          stock: { type: 'integer', example: 15 },
+          minStock: { type: 'integer', example: 5 },
+          maxStock: { type: 'integer', nullable: true, example: 50 },
+          location: { type: 'string', nullable: true, example: 'Bodega A-3' },
+          categoryId: { type: 'integer', nullable: true, example: 2 },
+          category: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 2 },
+              name: { type: 'string', example: 'Laptops' }
+            }
+          },
+          isActive: { type: 'boolean', example: true },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreateProductRequest: {
+        type: 'object',
+        required: ['name', 'price'],
+        properties: {
+          name: { type: 'string', maxLength: 200, example: 'Laptop HP 15-DY' },
+          description: { type: 'string', nullable: true, example: 'Laptop HP 15 pulgadas, 8GB RAM, 256GB SSD' },
+          sku: { type: 'string', nullable: true, maxLength: 100, example: 'LAP-HP-001' },
+          barcode: { type: 'string', nullable: true, maxLength: 100, example: '7891234567890' },
+          price: { type: 'number', minimum: 0, example: 650.00 },
+          cost: { type: 'number', nullable: true, minimum: 0, example: 450.00 },
+          taxPercent: { type: 'number', minimum: 0, maximum: 100, example: 15.00 },
+          categoryId: { type: 'integer', nullable: true, example: 2 },
+          minStock: { type: 'integer', minimum: 0, example: 5 },
+          maxStock: { type: 'integer', nullable: true, minimum: 0, example: 50 },
+          location: { type: 'string', nullable: true, maxLength: 100, example: 'Bodega A-3' },
+          isActive: { type: 'boolean', example: true }
+        }
+      },
+      UpdateProductRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', maxLength: 200, example: 'Laptop HP 15-DY Actualizada' },
+          description: { type: 'string', nullable: true, example: 'Descripción actualizada' },
+          sku: { type: 'string', nullable: true, maxLength: 100, example: 'LAP-HP-001' },
+          barcode: { type: 'string', nullable: true, maxLength: 100, example: '7891234567890' },
+          categoryId: { type: 'integer', nullable: true, example: 2 },
+          isActive: { type: 'boolean', example: true }
+        }
+      },
+      UpdatePriceRequest: {
+        type: 'object',
+        required: ['newPrice'],
+        properties: {
+          newPrice: { type: 'number', minimum: 0, example: 680.00 },
+          reason: { type: 'string', nullable: true, maxLength: 200, example: 'Ajuste por inflación' }
+        }
+      },
+      PriceHistory: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          productId: { type: 'integer', example: 1 },
+          previousPrice: { type: 'number', example: 650.00 },
+          newPrice: { type: 'number', example: 680.00 },
+          reason: { type: 'string', nullable: true, example: 'Ajuste por inflación' },
+          changedBy: { type: 'integer', example: 1 },
+          changedByUser: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              username: { type: 'string', example: 'admin' },
+              fullName: { type: 'string', example: 'Administrador Sistema' }
+            }
+          },
+          createdAt: { type: 'string', format: 'date-time' }
+        }
+      },
+
+      // --- INVENTORY ---
+      InventoryItem: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Laptop HP 15-DY' },
+          sku: { type: 'string', nullable: true, example: 'LAP-HP-001' },
+          barcode: { type: 'string', nullable: true, example: '7891234567890' },
+          stock: { type: 'integer', example: 15 },
+          minStock: { type: 'integer', example: 5 },
+          maxStock: { type: 'integer', nullable: true, example: 50 },
+          location: { type: 'string', nullable: true, example: 'Bodega A-3' },
+          category: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 2 },
+              name: { type: 'string', example: 'Electrónica' }
+            }
+          },
+          updatedAt: { type: 'string', format: 'date-time', example: '2026-03-05T10:30:00.000Z' }
+        }
+      },
+      StockMovement: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 25 },
+          productId: { type: 'integer', example: 1 },
+          movementType: { type: 'string', enum: ['entrada', 'salida', 'ajuste', 'inicial'], example: 'entrada' },
+          quantity: { type: 'integer', example: 10 },
+          stockBefore: { type: 'integer', example: 15 },
+          stockAfter: { type: 'integer', example: 25 },
+          reason: { type: 'string', example: 'Compra a proveedor' },
+          notes: { type: 'string', nullable: true, example: 'Factura #12345' },
+          referenceType: { type: 'string', nullable: true, example: 'purchase' },
+          referenceId: { type: 'integer', nullable: true, example: 123 },
+          performedBy: { type: 'integer', example: 1 },
+          performedByUser: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              username: { type: 'string', example: 'admin' },
+              fullName: { type: 'string', example: 'Administrador Sistema' }
+            }
+          },
+          createdAt: { type: 'string', format: 'date-time', example: '2026-03-01T14:30:00.000Z' }
+        }
+      },
+      RegisterMovementRequest: {
+        type: 'object',
+        required: ['productId', 'movementType', 'quantity', 'reason'],
+        properties: {
+          productId: { type: 'integer', example: 1 },
+          movementType: { type: 'string', enum: ['entrada', 'salida'], example: 'entrada' },
+          quantity: { type: 'integer', minimum: 1, example: 10 },
+          reason: { type: 'string', maxLength: 100, example: 'Compra de mercadería' },
+          notes: { type: 'string', nullable: true, maxLength: 500, example: 'Factura #12345' }
+        }
+      },
+      UpdateStockLimitsRequest: {
+        type: 'object',
+        required: ['minStock'],
+        properties: {
+          minStock: { type: 'integer', minimum: 0, example: 5 },
+          maxStock: { type: 'integer', nullable: true, minimum: 0, example: 50 },
+          location: { type: 'string', nullable: true, maxLength: 100, example: 'Bodega A-3' }
+        }
+      },
+      AdjustInventoryRequest: {
+        type: 'object',
+        required: ['productId', 'newStock', 'reason'],
+        properties: {
+          productId: { type: 'integer', example: 1 },
+          newStock: { type: 'integer', minimum: 0, example: 20 },
+          reason: { type: 'string', maxLength: 100, example: 'Inventario físico' },
+          notes: { type: 'string', nullable: true, maxLength: 500, example: 'Se encontraron 5 unidades extras' }
+        }
+      },
+      LowStockAlert: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 5 },
+          name: { type: 'string', example: 'Mouse inalámbrico' },
+          sku: { type: 'string', example: 'MOU-LOC-001' },
+          stock: { type: 'integer', example: 2 },
+          minStock: { type: 'integer', example: 10 },
+          maxStock: { type: 'integer', nullable: true, example: 50 },
+          deficit: { type: 'integer', example: 8 },
+          category: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 2 },
+              name: { type: 'string', example: 'Accesorios' }
+            }
+          }
+        }
+      },
+      InventoryValue: {
+        type: 'object',
+        properties: {
+          totalProducts: { type: 'integer', example: 150 },
+          totalItems: { type: 'integer', example: 2500 },
+          totalCostValue: { type: 'number', format: 'float', example: 45000.50 },
+          totalSaleValue: { type: 'number', format: 'float', example: 67500.75 },
+          potentialProfit: { type: 'number', format: 'float', example: 22500.25 }
         }
       }
     },
@@ -1524,6 +1791,1205 @@ Requiere permiso \`employees:edit\`.`,
           404: { $ref: '#/components/responses/NotFound' },
           409: { $ref: '#/components/responses/Conflict' },
           422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    // ==========================================
+    // CATEGORIES
+    // ==========================================
+    '/categories': {
+      get: {
+        tags: ['Categories'],
+        summary: 'Listar categorías',
+        description: `Obtiene el árbol completo de categorías con estructura jerárquica.
+
+**Filtros:**
+- \`status\`: 'active' (solo activas), 'inactive' (solo inactivas), 'all' (todas)
+
+**Estructura:**
+Las categorías raíz incluyen sus hijos en el campo \`children\`.
+
+Requiere permiso \`categories:view\`.`,
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['active', 'inactive', 'all'], default: 'active' }, example: 'active' }
+        ],
+        responses: {
+          200: {
+            description: 'Categorías obtenidas exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/Category' }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      },
+
+      post: {
+        tags: ['Categories'],
+        summary: 'Crear categoría',
+        description: `Crea una nueva categoría raíz o subcategoría.
+
+**Reglas:**
+- Si \`parentId\` es null → Categoría raíz (level 0)
+- Si \`parentId\` tiene valor → Subcategoría (level = nivel del padre + 1)
+- El nombre debe ser único
+
+Requiere permiso \`categories:create\`.`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateCategoryRequest' },
+              examples: {
+                raiz: {
+                  summary: 'Categoría raíz',
+                  value: { name: 'Electrónica', description: 'Dispositivos electrónicos', parentId: null }
+                },
+                subcategoria: {
+                  summary: 'Subcategoría',
+                  value: { name: 'Laptops', description: 'Computadoras portátiles', parentId: 1 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'Categoría creada exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Category' } } }
+                  ]
+                }
+              }
+            }
+          },
+          400: { $ref: '#/components/responses/Conflict' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/categories/{id}': {
+      get: {
+        tags: ['Categories'],
+        summary: 'Obtener categoría por ID',
+        description: `Obtiene los detalles de una categoría específica, incluyendo padre e hijos.
+
+Requiere permiso \`categories:view\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Categoría obtenida exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Category' } } }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      },
+
+      put: {
+        tags: ['Categories'],
+        summary: 'Actualizar categoría',
+        description: `Actualiza los datos de una categoría.
+
+**Nota:** No se puede cambiar el padre si la categoría tiene hijos.
+
+Requiere permiso \`categories:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateCategoryRequest' },
+              example: { name: 'Electrónica y Tecnología', description: 'Actualizado', parentId: null }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Categoría actualizada exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Category' } } }
+                  ]
+                }
+              }
+            }
+          },
+          400: { $ref: '#/components/responses/Conflict' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/categories/{id}/status': {
+      patch: {
+        tags: ['Categories'],
+        summary: 'Activar/desactivar categoría',
+        description: `Alterna el estado activo/inactivo de una categoría.
+
+**Comportamiento en desactivación:**
+- Desactiva la categoría
+- Desactiva TODAS las subcategorías hijas (cascada)
+
+Requiere permiso \`categories:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Estado actualizado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            category: { $ref: '#/components/schemas/Category' },
+                            affectedChildren: { type: 'integer', example: 3 }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/categories/{id}/products': {
+      get: {
+        tags: ['Categories'],
+        summary: 'Productos de una categoría',
+        description: `Obtiene todos los productos asociados a una categoría específica.
+
+Requiere permiso \`categories:view\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Productos obtenidos exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            category: { $ref: '#/components/schemas/Category' },
+                            products: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/Product' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    // ==========================================
+    // PRODUCTS
+    // ==========================================
+    '/products': {
+      get: {
+        tags: ['Products'],
+        summary: 'Listar productos',
+        description: `Obtiene el listado de productos con filtros y paginación.
+
+**Filtros disponibles:**
+- \`search\`: Busca por nombre, SKU o código de barras
+- \`categoryId\`: Filtra por categoría
+- \`isActive\`: true (activos), false (inactivos)
+- \`minPrice\` y \`maxPrice\`: Rango de precios
+
+Requiere permiso \`products:view\`.`,
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 },
+          { name: 'search', in: 'query', schema: { type: 'string' }, example: 'laptop' },
+          { name: 'categoryId', in: 'query', schema: { type: 'integer' }, example: 2 },
+          { name: 'isActive', in: 'query', schema: { type: 'boolean' }, example: true },
+          { name: 'minPrice', in: 'query', schema: { type: 'number' }, example: 100 },
+          { name: 'maxPrice', in: 'query', schema: { type: 'number' }, example: 1000 }
+        ],
+        responses: {
+          200: {
+            description: 'Productos obtenidos exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            products: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/Product' }
+                            },
+                            pagination: {
+                              type: 'object',
+                              properties: {
+                                total: { type: 'integer', example: 150 },
+                                page: { type: 'integer', example: 1 },
+                                limit: { type: 'integer', example: 10 },
+                                pages: { type: 'integer', example: 15 },
+                                hasNext: { type: 'boolean', example: true },
+                                hasPrev: { type: 'boolean', example: false }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      },
+
+      post: {
+        tags: ['Products'],
+        summary: 'Crear producto',
+        description: `Crea un nuevo producto en el catálogo.
+
+**Reglas:**
+- \`name\` y \`price\` son obligatorios
+- \`sku\` y \`barcode\` deben ser únicos si se especifican
+- El stock inicial se establece en 0 (se actualiza desde Inventory)
+
+Requiere permiso \`products:create\`.`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateProductRequest' },
+              example: {
+                name: 'Laptop HP 15-DY',
+                description: 'Laptop HP 15 pulgadas, 8GB RAM, 256GB SSD',
+                sku: 'LAP-HP-001',
+                barcode: '7891234567890',
+                price: 650.00,
+                cost: 450.00,
+                taxPercent: 15.00,
+                categoryId: 2,
+                minStock: 5,
+                maxStock: 50,
+                location: 'Bodega A-3',
+                isActive: true
+              }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'Producto creado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Product' } } }
+                  ]
+                }
+              }
+            }
+          },
+          400: { $ref: '#/components/responses/Conflict' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/products/{id}': {
+      get: {
+        tags: ['Products'],
+        summary: 'Obtener producto por ID',
+        description: `Obtiene los detalles completos de un producto, incluyendo categoría e historial de precios.
+
+Requiere permiso \`products:view\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Producto obtenido exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            product: { $ref: '#/components/schemas/Product' },
+                            priceHistory: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/PriceHistory' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      },
+
+      put: {
+        tags: ['Products'],
+        summary: 'Actualizar producto',
+        description: `Actualiza los datos generales de un producto.
+
+**Nota:** Para actualizar el precio, use \`PATCH /products/:id/price\` que registra en historial.
+
+Requiere permiso \`products:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateProductRequest' },
+              example: {
+                name: 'Laptop HP 15-DY Actualizada',
+                description: 'Descripción actualizada',
+                sku: 'LAP-HP-001',
+                categoryId: 2,
+                isActive: true
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Producto actualizado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Product' } } }
+                  ]
+                }
+              }
+            }
+          },
+          400: { $ref: '#/components/responses/Conflict' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+
+      delete: {
+        tags: ['Products'],
+        summary: 'Eliminar producto (soft delete)',
+        description: `Elimina lógicamente un producto (soft delete). El producto no se borra físicamente, solo se marca como eliminado.
+
+**Restricción:** No se puede eliminar si tiene movimientos de inventario.
+
+Requiere permiso \`products:delete\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Producto eliminado exitosamente',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccess' }
+              }
+            }
+          },
+          400: {
+            description: 'No se puede eliminar',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+                example: { success: false, message: 'No se puede eliminar el producto porque tiene movimientos de inventario', errors: null }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/products/{id}/price': {
+      patch: {
+        tags: ['Products'],
+        summary: 'Actualizar precio',
+        description: `Actualiza el precio de un producto y registra el cambio en el historial de precios.
+
+**Características:**
+- Registra precio anterior, nuevo precio y razón del cambio
+- Mantiene historial completo de cambios de precio
+- Registra quién realizó el cambio
+
+Requiere permiso \`products:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdatePriceRequest' },
+              example: {
+                newPrice: 680.00,
+                reason: 'Ajuste por inflación'
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Precio actualizado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            product: { $ref: '#/components/schemas/Product' },
+                            priceChange: { $ref: '#/components/schemas/PriceHistory' }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/products/{id}/status': {
+      patch: {
+        tags: ['Products'],
+        summary: 'Activar/desactivar producto',
+        description: `Alterna el estado activo/inactivo de un producto.
+
+Requiere permiso \`products:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Estado actualizado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Product' } } }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/products/barcode/{code}': {
+      get: {
+        tags: ['Products'],
+        summary: 'Buscar por código de barras',
+        description: `Busca un producto por su código de barras. Útil para sistemas de punto de venta con lectores de código de barras.
+
+Requiere permiso \`products:view\`.`,
+        parameters: [
+          { name: 'code', in: 'path', required: true, schema: { type: 'string' }, example: '7891234567890' }
+        ],
+        responses: {
+          200: {
+            description: 'Producto encontrado',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { properties: { data: { $ref: '#/components/schemas/Product' } } }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: {
+            description: 'Producto no encontrado',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+                example: { success: false, message: 'Producto no encontrado con ese código de barras', errors: null }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // ==========================================
+    // INVENTORY
+    // ==========================================
+    '/inventory': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Listar inventario',
+        description: `Obtiene el listado de productos con su stock actual y filtros disponibles.
+
+**Filtros disponibles:**
+- \`search\`: Busca por nombre, SKU o código de barras
+- \`categoryId\`: Filtra por categoría
+- \`lowStock\`: true para mostrar solo productos con stock bajo (stock <= minStock)
+- \`outOfStock\`: true para mostrar solo productos sin stock
+
+Requiere permiso \`inventory:view\`.`,
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 },
+          { name: 'search', in: 'query', schema: { type: 'string' }, example: 'laptop' },
+          { name: 'categoryId', in: 'query', schema: { type: 'integer' }, example: 2 },
+          { name: 'lowStock', in: 'query', schema: { type: 'boolean' }, example: false },
+          { name: 'outOfStock', in: 'query', schema: { type: 'boolean' }, example: false }
+        ],
+        responses: {
+          200: {
+            description: 'Inventario obtenido exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            inventory: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/InventoryItem' }
+                            },
+                            pagination: {
+                              type: 'object',
+                              properties: {
+                                total: { type: 'integer', example: 150 },
+                                page: { type: 'integer', example: 1 },
+                                limit: { type: 'integer', example: 10 },
+                                pages: { type: 'integer', example: 15 },
+                                hasNext: { type: 'boolean', example: true },
+                                hasPrev: { type: 'boolean', example: false }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/inventory/{id}': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Obtener stock de un producto',
+        description: `Obtiene información detallada del stock de un producto específico, incluyendo alertas si el stock está bajo o excede el máximo.
+
+Requiere permiso \`inventory:view\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        responses: {
+          200: {
+            description: 'Stock del producto obtenido exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            product: { $ref: '#/components/schemas/InventoryItem' },
+                            stockStatus: {
+                              type: 'object',
+                              properties: {
+                                current: { type: 'integer', example: 15 },
+                                min: { type: 'integer', example: 5 },
+                                max: { type: 'integer', nullable: true, example: 50 },
+                                difference: { type: 'integer', example: 10 },
+                                needsRestock: { type: 'boolean', example: false }
+                              }
+                            },
+                            alerts: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  type: { type: 'string', example: 'warning' },
+                                  message: { type: 'string', example: 'Stock bajo' }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/inventory/movement': {
+      post: {
+        tags: ['Inventory'],
+        summary: 'Registrar movimiento manual',
+        description: `Registra un movimiento manual de entrada o salida de inventario.
+
+**Tipos de movimiento:**
+- \`entrada\`: Aumenta el stock (ej: compras, devoluciones de clientes)
+- \`salida\`: Disminuye el stock (ej: ventas, merma, productos dañados)
+
+**Nota:** Las compras y ventas registran movimientos automáticamente. Use este endpoint solo para ajustes manuales.
+
+Requiere permiso \`inventory:create\`.`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RegisterMovementRequest' },
+              examples: {
+                entrada: {
+                  summary: 'Entrada de mercadería',
+                  value: {
+                    productId: 1,
+                    movementType: 'entrada',
+                    quantity: 50,
+                    reason: 'Compra a proveedor',
+                    notes: 'Factura #12345'
+                  }
+                },
+                salida: {
+                  summary: 'Salida por daño',
+                  value: {
+                    productId: 1,
+                    movementType: 'salida',
+                    quantity: 3,
+                    reason: 'Productos dañados',
+                    notes: 'Daño durante transporte'
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'Movimiento registrado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            movement: { $ref: '#/components/schemas/StockMovement' },
+                            product: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'integer', example: 1 },
+                                name: { type: 'string', example: 'Laptop HP 15-DY' },
+                                previousStock: { type: 'integer', example: 15 },
+                                currentStock: { type: 'integer', example: 25 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          400: {
+            description: 'Stock insuficiente o datos inválidos',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+                example: { success: false, message: 'Stock insuficiente. Actual: 5, Solicitado: 10', errors: null }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/inventory/{id}/movements': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Historial de movimientos',
+        description: `Obtiene el historial completo de movimientos de un producto con filtros de fecha y tipo.
+
+**Filtros disponibles:**
+- \`startDate\` y \`endDate\`: Rango de fechas (formato ISO8601)
+- \`movementType\`: entrada, salida, ajuste o inicial
+
+Requiere permiso \`inventory:view\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 }, example: 20 },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-03-01T00:00:00Z' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-03-31T23:59:59Z' },
+          { name: 'movementType', in: 'query', schema: { type: 'string', enum: ['entrada', 'salida', 'ajuste', 'inicial'] }, example: 'entrada' }
+        ],
+        responses: {
+          200: {
+            description: 'Historial obtenido exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            product: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'integer', example: 1 },
+                                name: { type: 'string', example: 'Laptop HP 15-DY' },
+                                sku: { type: 'string', example: 'LAP-HP-001' },
+                                currentStock: { type: 'integer', example: 25 }
+                              }
+                            },
+                            movements: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/StockMovement' }
+                            },
+                            pagination: {
+                              type: 'object',
+                              properties: {
+                                total: { type: 'integer', example: 45 },
+                                page: { type: 'integer', example: 1 },
+                                limit: { type: 'integer', example: 20 },
+                                pages: { type: 'integer', example: 3 },
+                                hasNext: { type: 'boolean', example: true },
+                                hasPrev: { type: 'boolean', example: false }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/inventory/{id}/limits': {
+      put: {
+        tags: ['Inventory'],
+        summary: 'Actualizar límites de stock',
+        description: `Actualiza los límites mínimos y máximos de stock de un producto, así como su ubicación en bodega.
+
+**Reglas:**
+- \`minStock\`: Stock mínimo para generar alertas (requerido, >= 0)
+- \`maxStock\`: Stock máximo recomendado (opcional, debe ser >= minStock)
+- \`location\`: Ubicación física en bodega (opcional)
+
+Requiere permiso \`inventory:edit\`.`,
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateStockLimitsRequest' },
+              example: {
+                minStock: 10,
+                maxStock: 100,
+                location: 'Bodega Principal A-3'
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Límites actualizados exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'integer', example: 1 },
+                            name: { type: 'string', example: 'Laptop HP 15-DY' },
+                            stock: { type: 'integer', example: 25 },
+                            minStock: { type: 'integer', example: 10 },
+                            maxStock: { type: 'integer', example: 100 },
+                            location: { type: 'string', example: 'Bodega Principal A-3' }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          400: {
+            description: 'Datos inválidos',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+                example: { success: false, message: 'El stock máximo debe ser mayor o igual al stock mínimo', errors: null }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/inventory/alerts': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Alertas de stock bajo',
+        description: `Obtiene el listado de productos con stock bajo o sin stock.
+
+**Criterios:**
+- Productos con stock <= minStock
+- Ordenados por criticidad (sin stock primero, luego por déficit)
+
+**Resumen incluido:**
+- Total de productos en alerta
+- Cantidad sin stock (stock = 0)
+- Cantidad crítica (stock <= 30% del mínimo)
+- Cantidad en advertencia (stock > 30% del mínimo y <= mínimo)
+
+Requiere permiso \`inventory:view\`.`,
+        responses: {
+          200: {
+            description: 'Alertas obtenidas exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            alerts: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/LowStockAlert' }
+                            },
+                            summary: {
+                              type: 'object',
+                              properties: {
+                                total: { type: 'integer', example: 12 },
+                                outOfStock: { type: 'integer', example: 3 },
+                                critical: { type: 'integer', example: 5 },
+                                warning: { type: 'integer', example: 4 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/inventory/adjust': {
+      post: {
+        tags: ['Inventory'],
+        summary: 'Ajustar inventario por conteo físico',
+        description: `Ajusta el stock de un producto basándose en un conteo físico (inventario real).
+
+**Uso:**
+- Corrección de diferencias entre sistema y stock físico
+- Registro automático de movimiento tipo "ajuste"
+- Calcula la diferencia y actualiza el stock
+
+**Nota:** Este endpoint es para ajustes por conteo físico. Para movimientos regulares use \`POST /inventory/movement\`.
+
+Requiere permiso \`inventory:edit\`.`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AdjustInventoryRequest' },
+              example: {
+                productId: 1,
+                newStock: 20,
+                reason: 'Inventario físico mensual',
+                notes: 'Se encontraron 5 unidades adicionales no registradas'
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Inventario ajustado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            adjustment: {
+                              type: 'object',
+                              properties: {
+                                productId: { type: 'integer', example: 1 },
+                                productName: { type: 'string', example: 'Laptop HP 15-DY' },
+                                stockBefore: { type: 'integer', example: 15 },
+                                stockAfter: { type: 'integer', example: 20 },
+                                difference: { type: 'integer', example: 5 },
+                                reason: { type: 'string', example: 'Inventario físico mensual' }
+                              }
+                            },
+                            movement: { $ref: '#/components/schemas/StockMovement' }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          400: { $ref: '#/components/responses/Conflict' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/inventory/value': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Valor total del inventario',
+        description: `Calcula el valor total del inventario basado en costos y precios de venta.
+
+**Información incluida:**
+- Cantidad total de productos diferentes
+- Cantidad total de unidades en stock
+- Valor total al costo
+- Valor total al precio de venta
+- Ganancia potencial
+- Desglose por categoría
+
+**Filtros:**
+- \`categoryId\`: Calcular solo para una categoría específica
+
+Requiere permiso \`inventory:view\`.`,
+        parameters: [
+          { name: 'categoryId', in: 'query', schema: { type: 'integer' }, example: 2 }
+        ],
+        responses: {
+          200: {
+            description: 'Valor calculado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    {
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            summary: { $ref: '#/components/schemas/InventoryValue' },
+                            byCategory: {
+                              type: 'object',
+                              additionalProperties: {
+                                type: 'object',
+                                properties: {
+                                  products: { type: 'integer', example: 25 },
+                                  items: { type: 'integer', example: 450 },
+                                  costValue: { type: 'number', example: 12500.00 },
+                                  saleValue: { type: 'number', example: 18750.00 }
+                                }
+                              },
+                              example: {
+                                'Electrónica': {
+                                  products: 25,
+                                  items: 450,
+                                  costValue: 12500.00,
+                                  saleValue: 18750.00
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
         }
       }
     }

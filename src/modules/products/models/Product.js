@@ -91,6 +91,27 @@ module.exports = (sequelize) => {
       comment: 'Stock disponible (actualizado por módulo Inventario)'
     },
 
+    minStock: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'min_stock',
+      comment: 'Stock mínimo para alertas (Sprint 7)'
+    },
+
+    maxStock: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'max_stock',
+      comment: 'Stock máximo recomendado (Sprint 7)'
+    },
+
+    location: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Ubicación física en bodega (Sprint 7)'
+    },
+
     categoryId: {
       type: DataTypes.INTEGER,
       allowNull: true,

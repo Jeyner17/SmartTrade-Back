@@ -98,17 +98,17 @@ const modules = [
   },
 
   // ==========================================
-  // SPRINT 7: INVENTARIO (Ejemplo futuro)
+  // SPRINT 7: INVENTARIO
   // ==========================================
-  // {
-  //   name: 'inventory',
-  //   route: '/inventory',
-  //   path: '../modules/inventory/routes/inventory.routes',
-  //   enabled: false,
-  //   description: 'Control de inventario y stock',
-  //   version: '1.0.0',
-  //   sprint: 7
-  // },
+  {
+    name: 'inventory',
+    route: '/inventory',
+    path: '../modules/inventory/routes/stock.routes',
+    enabled: true,
+    description: 'Control de inventario y stock',
+    version: '1.0.0',
+    sprint: 7
+  },
 
   // ==========================================
   // SPRINT 8: PROVEEDORES

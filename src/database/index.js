@@ -49,6 +49,9 @@ const Category = require('../modules/categories/models/Category')(sequelize);
 const Product = require('../modules/products/models/Product')(sequelize);
 const PriceHistory = require('../modules/products/models/PriceHistory')(sequelize);
 
+// Módulo: Inventory (Sprint 7)
+const StockMovement = require('../modules/inventory/models/StockMovement')(sequelize);
+
 // Módulo: Suppliers (Sprint 8)
 const Supplier = require('../modules/suppliers/models/Supplier')(sequelize);
 const SupplierContact = require('../modules/suppliers/models/SupplierContact')(sequelize);
@@ -93,6 +96,14 @@ PriceHistory.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 User.hasMany(PriceHistory, { foreignKey: 'changedBy', as: 'priceChanges' });
 PriceHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUser' });
 
+// Product ↔ StockMovement
+Product.hasMany(StockMovement, { foreignKey: 'productId', as: 'stockMovements' });
+StockMovement.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// User ↔ StockMovement
+User.hasMany(StockMovement, { foreignKey: 'performedBy', as: 'inventoryMovements' });
+StockMovement.belongsTo(User, { foreignKey: 'performedBy', as: 'performedByUser' });
+
 // Supplier ↔ SupplierContact
 Supplier.hasMany(SupplierContact, { foreignKey: 'supplierId', as: 'contacts' });
 SupplierContact.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
@@ -130,6 +141,9 @@ const db = {
   // Products
   Product,
   PriceHistory,
+
+  // Inventory
+  StockMovement,
 
   // Suppliers
   Supplier,
