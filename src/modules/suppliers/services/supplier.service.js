@@ -1,13 +1,7 @@
 const { Op, fn, col, literal } = require('sequelize');
 const { Supplier, SupplierContact, SupplierEvaluation } = require('../../../database');
 const logger = require('../../../utils/logger');
-
-const ERROR = {
-    NOT_FOUND: 'Proveedor no encontrado',
-    RUC_IN_USE: 'El RUC ya está registrado por otro proveedor',
-    HAS_PURCHASES: 'No se puede eliminar el proveedor porque tiene compras asociadas',
-    CONTACT_NOT_FOUND: 'Contacto no encontrado'
-};
+const { SUPPLIER_ERRORS: ERROR } = require('../../../shared/constants/suppliers.constants');
 
 /**
  * Servicio de Gestión de Proveedores

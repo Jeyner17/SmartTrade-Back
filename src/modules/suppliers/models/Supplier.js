@@ -1,10 +1,9 @@
 const { DataTypes } = require('sequelize');
 const { DB_SCHEMAS } = require('../../../shared/constants/schemas');
+const { SUPPLIER_STATUS, PAYMENT_TERMS } = require('../../../shared/constants/suppliers.constants');
 
 const SCHEMA = DB_SCHEMAS.SUPPLIERS;
 
-const SUPPLIER_STATUS = ['active', 'inactive', 'suspended'];
-const PAYMENT_TERMS = ['contado', 'credito_15', 'credito_30', 'credito_60', 'credito_90'];
 
 /**
  * Modelo Supplier - Proveedores del sistema
@@ -72,15 +71,15 @@ module.exports = (sequelize) => {
         paymentTerms: {
             type: DataTypes.STRING(20),
             allowNull: false,
-            defaultValue: 'contado',
+            defaultValue: 'transferencia',
             field: 'payment_terms',
             validate: {
                 isIn: {
                     args: [PAYMENT_TERMS],
-                    msg: `Términos de pago inválidos. Valores: ${PAYMENT_TERMS.join(', ')}`
+                    msg: `Forma de pago inválida. Valores: ${PAYMENT_TERMS.join(', ')}`
                 }
             },
-            comment: 'Condiciones de pago: contado, credito_15, credito_30, credito_60, credito_90'
+            comment: 'Forma de pago preferida: transferencia, cheque, efectivo'
         },
 
         bankName: {

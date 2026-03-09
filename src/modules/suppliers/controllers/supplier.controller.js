@@ -1,12 +1,7 @@
 const supplierService = require('../services/supplier.service');
 const ApiResponse = require('../../../utils/response');
 const logger = require('../../../utils/logger');
-
-const ERR = {
-    NOT_FOUND: 'Proveedor no encontrado',
-    RUC_IN_USE: 'El RUC ya está registrado por otro proveedor',
-    HAS_PURCHASES: 'No se puede eliminar el proveedor porque tiene compras asociadas'
-};
+const { SUPPLIER_ERRORS } = require('../../../shared/constants/suppliers.constants');
 
 /**
  * Controller de Gestión de Proveedores
@@ -56,7 +51,7 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en createSupplier:', error);
 
-            if (error.message === ERR.RUC_IN_USE) {
+            if (error.message === SUPPLIER_ERRORS.RUC_IN_USE) {
                 return ApiResponse.conflict(res, error.message);
             }
 
@@ -79,7 +74,7 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en getSupplierById:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
@@ -107,11 +102,11 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en updateSupplier:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
-            if (error.message === ERR.RUC_IN_USE) {
+            if (error.message === SUPPLIER_ERRORS.RUC_IN_USE) {
                 return ApiResponse.conflict(res, error.message);
             }
 
@@ -145,7 +140,7 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en getPurchaseHistory:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
@@ -173,7 +168,7 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en evaluateSupplier:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
@@ -204,7 +199,7 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en changeStatus:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
@@ -227,11 +222,11 @@ class SupplierController {
         } catch (error) {
             logger.error('Error en deleteSupplier:', error);
 
-            if (error.message === ERR.NOT_FOUND) {
+            if (error.message === SUPPLIER_ERRORS.NOT_FOUND) {
                 return ApiResponse.notFound(res, error.message);
             }
 
-            if (error.message === ERR.HAS_PURCHASES) {
+            if (error.message === SUPPLIER_ERRORS.HAS_PURCHASES) {
                 return ApiResponse.conflict(res, error.message);
             }
 

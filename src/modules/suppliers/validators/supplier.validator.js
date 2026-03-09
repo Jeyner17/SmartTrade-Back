@@ -1,8 +1,7 @@
 const { body, query, param, validationResult } = require('express-validator');
 const ApiResponse = require('../../../utils/response');
+const { SUPPLIER_STATUS, PAYMENT_TERMS } = require('../../../shared/constants/suppliers.constants');
 
-const SUPPLIER_STATUS = ['active', 'inactive', 'suspended'];
-const PAYMENT_TERMS = ['contado', 'credito_15', 'credito_30', 'credito_60', 'credito_90'];
 
 /**
  * Middleware que procesa los errores de validación
