@@ -57,6 +57,10 @@ const Supplier = require('../modules/suppliers/models/Supplier')(sequelize);
 const SupplierContact = require('../modules/suppliers/models/SupplierContact')(sequelize);
 const SupplierEvaluation = require('../modules/suppliers/models/SupplierEvaluation')(sequelize);
 
+// Módulo: Barcodes (Sprint 11)
+const ScanLog = require('../modules/barcodes/models/ScanLog')(sequelize);
+const ScannerConfig = require('../modules/barcodes/models/ScannerConfig')(sequelize);
+
 // ============================================
 // DEFINIR RELACIONES
 // ============================================
@@ -112,6 +116,17 @@ SupplierContact.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' }
 Supplier.hasMany(SupplierEvaluation, { foreignKey: 'supplierId', as: 'evaluations' });
 SupplierEvaluation.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
 
+// ScanLog ↔ User
+User.hasMany(ScanLog, { foreignKey: 'performedBy', as: 'scanLogs' });
+ScanLog.belongsTo(User, { foreignKey: 'performedBy', as: 'performer' });
+
+// ScanLog → Product (solo sentido inverso, evita romper queries cross-schema en products)
+ScanLog.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// ScannerConfig ↔ User
+User.hasOne(ScannerConfig, { foreignKey: 'userId', as: 'scannerConfig' });
+ScannerConfig.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // ============================================
 // EXPORTAR
 // ============================================
@@ -148,7 +163,11 @@ const db = {
   // Suppliers
   Supplier,
   SupplierContact,
-  SupplierEvaluation
+  SupplierEvaluation,
+
+  // Barcodes
+  ScanLog,
+  ScannerConfig
 };
 
 module.exports = db;

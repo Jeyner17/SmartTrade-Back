@@ -137,6 +137,19 @@ const modules = [
   // },
 
   // ==========================================
+  // SPRINT 11: ESCANEO DE CÓDIGOS DE BARRAS/QR
+  // ==========================================
+  {
+    name: 'barcodes',
+    route: '/barcodes',
+    path: '../modules/barcodes/routes/barcode.routes',
+    enabled: true,
+    description: 'Escaneo y generación de códigos de barras y QR',
+    version: '1.0.0',
+    sprint: 11
+  },
+
+  // ==========================================
   // MÁS MÓDULOS FUTUROS...
   // ==========================================
 ];
