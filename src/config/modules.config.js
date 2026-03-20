@@ -124,17 +124,17 @@ const modules = [
   },
 
   // ==========================================
-  // SPRINT 9: COMPRAS (Ejemplo futuro)
+  // SPRINT 9: COMPRAS
   // ==========================================
-  // {
-  //   name: 'purchases',
-  //   route: '/purchases',
-  //   path: '../modules/purchases/routes/purchase.routes',
-  //   enabled: false,
-  //   description: 'Órdenes de compra',
-  //   version: '1.0.0',
-  //   sprint: 9
-  // },
+  {
+    name: 'purchases',
+    route: '/purchases',
+    path: '../modules/purchases/routes/purchase.routes',
+    enabled: true,
+    description: 'Órdenes de compra',
+    version: '1.0.0',
+    sprint: 9
+  },
 
   // ==========================================
   // SPRINT 11: ESCANEO DE CÓDIGOS DE BARRAS/QR

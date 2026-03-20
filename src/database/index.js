@@ -57,6 +57,11 @@ const Supplier = require('../modules/suppliers/models/Supplier')(sequelize);
 const SupplierContact = require('../modules/suppliers/models/SupplierContact')(sequelize);
 const SupplierEvaluation = require('../modules/suppliers/models/SupplierEvaluation')(sequelize);
 
+// Módulo: Purchases (Sprint 9)
+const PurchaseOrder = require('../modules/purchases/models/PurchaseOrder')(sequelize);
+const PurchaseDetail = require('../modules/purchases/models/PurchaseDetail')(sequelize);
+const PurchaseStatusHistory = require('../modules/purchases/models/PurchaseStatusHistory')(sequelize);
+
 // Módulo: Barcodes (Sprint 11)
 const ScanLog = require('../modules/barcodes/models/ScanLog')(sequelize);
 const ScannerConfig = require('../modules/barcodes/models/ScannerConfig')(sequelize);
@@ -116,6 +121,32 @@ SupplierContact.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' }
 Supplier.hasMany(SupplierEvaluation, { foreignKey: 'supplierId', as: 'evaluations' });
 SupplierEvaluation.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
 
+// Supplier ↔ PurchaseOrder
+Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplierId', as: 'purchaseOrders' });
+PurchaseOrder.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+
+// PurchaseOrder ↔ PurchaseDetail
+PurchaseOrder.hasMany(PurchaseDetail, { foreignKey: 'purchaseOrderId', as: 'details' });
+PurchaseDetail.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+// Product ↔ PurchaseDetail
+Product.hasMany(PurchaseDetail, { foreignKey: 'productId', as: 'purchaseDetails' });
+PurchaseDetail.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// PurchaseOrder ↔ PurchaseStatusHistory
+PurchaseOrder.hasMany(PurchaseStatusHistory, { foreignKey: 'purchaseOrderId', as: 'statusHistory' });
+PurchaseStatusHistory.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
+
+// User ↔ PurchaseOrder
+User.hasMany(PurchaseOrder, { foreignKey: 'createdBy', as: 'purchaseOrdersCreated' });
+User.hasMany(PurchaseOrder, { foreignKey: 'updatedBy', as: 'purchaseOrdersUpdated' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
+
+// User ↔ PurchaseStatusHistory
+User.hasMany(PurchaseStatusHistory, { foreignKey: 'changedBy', as: 'purchaseStatusChanges' });
+PurchaseStatusHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUser' });
+
 // ScanLog ↔ User
 User.hasMany(ScanLog, { foreignKey: 'performedBy', as: 'scanLogs' });
 ScanLog.belongsTo(User, { foreignKey: 'performedBy', as: 'performer' });
@@ -164,6 +195,11 @@ const db = {
   Supplier,
   SupplierContact,
   SupplierEvaluation,
+
+  // Purchases
+  PurchaseOrder,
+  PurchaseDetail,
+  PurchaseStatusHistory,
 
   // Barcodes
   ScanLog,

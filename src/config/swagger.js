@@ -33,6 +33,8 @@ Usa **JWT Bearer Token**. Para obtener tu token:
 | 5 | Categories | ✅ Activo |
 | 6 | Products | ✅ Activo |
 | 7 | Inventory | ✅ Activo |
+| 8 | Suppliers | ✅ Activo |
+| 9 | Purchases | ✅ Activo |
     `,
     contact: {
       name: 'LionTech',
@@ -93,6 +95,10 @@ Usa **JWT Bearer Token**. Para obtener tu token:
     {
       name: 'Inventory',
       description: 'Gestión de inventario: control de stock, movimientos, ajustes, alertas y valorización'
+    },
+    {
+      name: 'Purchases',
+      description: 'Órdenes de compra a proveedores, recepción y reportes de compras'
     }
   ],
 
@@ -711,6 +717,137 @@ Usa **JWT Bearer Token**. Para obtener tu token:
           totalCostValue: { type: 'number', format: 'float', example: 45000.50 },
           totalSaleValue: { type: 'number', format: 'float', example: 67500.75 },
           potentialProfit: { type: 'number', format: 'float', example: 22500.25 }
+        }
+      },
+
+      // --- PURCHASES ---
+      PurchaseOrder: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          orderNumber: { type: 'string', example: 'PO-20260318-0001' },
+          supplierId: { type: 'integer', example: 3 },
+          orderDate: { type: 'string', format: 'date', example: '2026-03-18' },
+          expectedDeliveryDate: { type: 'string', format: 'date', nullable: true, example: '2026-03-25' },
+          status: { type: 'string', enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'], example: 'pendiente' },
+          subtotal: { type: 'number', format: 'float', example: 1250.00 },
+          totalAmount: { type: 'number', format: 'float', example: 1250.00 },
+          notes: { type: 'string', nullable: true, example: 'Entrega parcial permitida' },
+          statusObservations: { type: 'string', nullable: true, example: 'Confirmada por proveedor' },
+          receivedAt: { type: 'string', format: 'date-time', nullable: true },
+          cancelledAt: { type: 'string', format: 'date-time', nullable: true },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      PurchaseOrderDetail: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 10 },
+          purchaseOrderId: { type: 'integer', example: 1 },
+          productId: { type: 'integer', example: 5 },
+          quantityOrdered: { type: 'integer', example: 20 },
+          quantityReceived: { type: 'integer', example: 18 },
+          unitCost: { type: 'number', format: 'float', example: 12.50 },
+          lineTotal: { type: 'number', format: 'float', example: 250.00 },
+          notes: { type: 'string', nullable: true, example: 'Caja con daño menor' },
+          product: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 5 },
+              name: { type: 'string', example: 'Mouse inalámbrico' },
+              sku: { type: 'string', example: 'MOU-001' },
+              barcode: { type: 'string', example: '7891234567890' }
+            }
+          }
+        }
+      },
+      PurchaseStatusHistory: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 21 },
+          purchaseOrderId: { type: 'integer', example: 1 },
+          previousStatus: { type: 'string', nullable: true, enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'], example: 'pendiente' },
+          newStatus: { type: 'string', enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'], example: 'confirmada' },
+          notes: { type: 'string', nullable: true, example: 'Proveedor confirmó stock' },
+          changedBy: { type: 'integer', example: 1 },
+          changedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreatePurchaseOrderRequest: {
+        type: 'object',
+        required: ['supplierId', 'products'],
+        properties: {
+          supplierId: { type: 'integer', example: 3 },
+          expectedDeliveryDate: { type: 'string', format: 'date', nullable: true, example: '2026-03-25' },
+          observations: { type: 'string', nullable: true, example: 'Entregar en bodega principal' },
+          products: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              required: ['productId', 'quantity', 'unitCost'],
+              properties: {
+                productId: { type: 'integer', example: 5 },
+                quantity: { type: 'integer', minimum: 1, example: 20 },
+                unitCost: { type: 'number', minimum: 0, example: 12.50 }
+              }
+            }
+          }
+        }
+      },
+      UpdatePurchaseOrderRequest: {
+        type: 'object',
+        properties: {
+          supplierId: { type: 'integer', example: 3 },
+          expectedDeliveryDate: { type: 'string', format: 'date', nullable: true, example: '2026-03-26' },
+          observations: { type: 'string', nullable: true, example: 'Actualizar dirección de entrega' },
+          products: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              required: ['productId', 'quantity', 'unitCost'],
+              properties: {
+                productId: { type: 'integer', example: 5 },
+                quantity: { type: 'integer', minimum: 1, example: 25 },
+                unitCost: { type: 'number', minimum: 0, example: 12.50 }
+              }
+            }
+          }
+        }
+      },
+      ChangePurchaseStatusRequest: {
+        type: 'object',
+        required: ['newStatus'],
+        properties: {
+          newStatus: { type: 'string', enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'], example: 'confirmada' },
+          observations: { type: 'string', nullable: true, example: 'Proveedor confirmó despacho' }
+        }
+      },
+      ReceivePurchaseOrderRequest: {
+        type: 'object',
+        properties: {
+          observations: { type: 'string', nullable: true, example: 'Faltaron 2 unidades del producto MOU-001' },
+          products: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['productId', 'quantityReceived'],
+              properties: {
+                productId: { type: 'integer', example: 5 },
+                quantityReceived: { type: 'integer', minimum: 0, example: 18 }
+              }
+            }
+          }
+        }
+      },
+      CancelPurchaseOrderRequest: {
+        type: 'object',
+        required: ['reason'],
+        properties: {
+          reason: { type: 'string', maxLength: 500, example: 'Proveedor no puede cumplir tiempos de entrega' }
         }
       }
     },
@@ -2990,6 +3127,211 @@ Requiere permiso \`inventory:view\`.`,
           },
           401: { $ref: '#/components/responses/Unauthorized' },
           403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    // ==========================================
+    // PURCHASES
+    // ==========================================
+    '/purchases': {
+      get: {
+        tags: ['Purchases'],
+        summary: 'Listar órdenes de compra',
+        description: 'Devuelve la lista de órdenes de compra con filtros y paginación. Requiere permiso `purchases:view`.',
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 },
+          { name: 'supplierId', in: 'query', schema: { type: 'integer' }, example: 3 },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'] }, example: 'pendiente' },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-01' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-31' }
+        ],
+        responses: {
+          200: { description: 'Órdenes obtenidas exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+      post: {
+        tags: ['Purchases'],
+        summary: 'Crear orden de compra',
+        description: 'Registra una nueva orden de compra y genera automáticamente el número de orden. Requiere permiso `purchases:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreatePurchaseOrderRequest' },
+              example: {
+                supplierId: 3,
+                expectedDeliveryDate: '2026-03-25',
+                observations: 'Entrega en bodega principal',
+                products: [
+                  { productId: 5, quantity: 20, unitCost: 12.50 },
+                  { productId: 8, quantity: 10, unitCost: 45.00 }
+                ]
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Orden creada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/{id}': {
+      get: {
+        tags: ['Purchases'],
+        summary: 'Obtener orden de compra por ID',
+        description: 'Retorna el detalle completo de la orden incluyendo productos e historial de estados. Requiere permiso `purchases:view`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        responses: {
+          200: { description: 'Orden obtenida exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      },
+      put: {
+        tags: ['Purchases'],
+        summary: 'Actualizar orden de compra',
+        description: 'Modifica una orden existente, solo si está en estado pendiente. Requiere permiso `purchases:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdatePurchaseOrderRequest' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Orden actualizada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/{id}/status': {
+      patch: {
+        tags: ['Purchases'],
+        summary: 'Cambiar estado de orden',
+        description: 'Actualiza el estado de la orden (pendiente, confirmada, recibida, cancelada). Para `recibida` use `/purchases/{id}/receive`. Requiere permiso `purchases:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/ChangePurchaseStatusRequest' } } }
+        },
+        responses: {
+          200: { description: 'Estado actualizado exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/{id}/receive': {
+      post: {
+        tags: ['Purchases'],
+        summary: 'Recibir orden de compra',
+        description: 'Marca la orden como recibida y actualiza inventario según cantidades recibidas. Requiere permiso `purchases:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ReceivePurchaseOrderRequest' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Recepción confirmada y stock actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/{id}/cancel': {
+      post: {
+        tags: ['Purchases'],
+        summary: 'Cancelar orden de compra',
+        description: 'Cancela una orden de compra con motivo obligatorio. Requiere permiso `purchases:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CancelPurchaseOrderRequest' },
+              example: { reason: 'Proveedor no puede entregar en plazo' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Orden cancelada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/supplier/{supplierId}': {
+      get: {
+        tags: ['Purchases'],
+        summary: 'Obtener compras por proveedor',
+        description: 'Lista compras de un proveedor con filtros por fecha y paginación. Requiere permiso `purchases:view`.',
+        parameters: [
+          { name: 'supplierId', in: 'path', required: true, schema: { type: 'integer' }, example: 3 },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-01' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-31' },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 }
+        ],
+        responses: {
+          200: { description: 'Compras del proveedor obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/purchases/report': {
+      get: {
+        tags: ['Purchases'],
+        summary: 'Generar reporte de compras',
+        description: 'Genera estadísticas de compras por período, proveedor y estado. Requiere permiso `purchases:view`.',
+        parameters: [
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-01' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-31' },
+          { name: 'supplierId', in: 'query', schema: { type: 'integer' }, example: 3 },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['pendiente', 'confirmada', 'recibida', 'cancelada'] }, example: 'recibida' }
+        ],
+        responses: {
+          200: { description: 'Reporte generado exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
         }
       }
     }
