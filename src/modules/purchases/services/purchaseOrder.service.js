@@ -72,7 +72,7 @@ class PurchaseOrderService {
 		return products;
 	}
 
-	buildOrderTotals(products = []) {
+	buildOrderTotals(products = [], applyIva = false, ivaPercent = 0) {
 		const normalized = products.map(item => {
 			const quantity = parseInt(item.quantity, 10);
 			const unitCost = parseFloat(item.unitCost);
@@ -86,10 +86,15 @@ class PurchaseOrderService {
 		});
 
 		const subtotal = normalized.reduce((sum, line) => sum + line.lineTotal, 0);
+		const ivaAmount = applyIva ? parseFloat((subtotal * (ivaPercent / 100)).toFixed(2)) : 0;
+		const totalAmount = parseFloat((subtotal + ivaAmount).toFixed(2));
+
 		return {
 			lines: normalized,
 			subtotal: parseFloat(subtotal.toFixed(2)),
-			totalAmount: parseFloat(subtotal.toFixed(2))
+			ivaAmount,
+			ivaPercent: applyIva ? parseFloat(ivaPercent) : 0,
+			totalAmount
 		};
 	}
 
@@ -164,7 +169,7 @@ class PurchaseOrderService {
 		};
 	}
 
-	async createPurchaseOrder({ supplierId, products, expectedDeliveryDate, observations }, userId) {
+	async createPurchaseOrder({ supplierId, products, expectedDeliveryDate, observations, applyIva, ivaPercent }, userId) {
 		if (!Array.isArray(products) || products.length === 0) {
 			throw new Error(ERROR.EMPTY_PRODUCTS);
 		}
@@ -175,7 +180,7 @@ class PurchaseOrderService {
 
 			await this.ensureSupplierExists(supplierId, transaction);
 
-			const totals = this.buildOrderTotals(products);
+			const totals = this.buildOrderTotals(products, applyIva, ivaPercent);
 			await this.ensureProductsExist(
 				totals.lines.map(line => line.productId),
 				transaction
@@ -189,6 +194,8 @@ class PurchaseOrderService {
 				expectedDeliveryDate: expectedDeliveryDate || null,
 				status: STATUS.PENDING,
 				subtotal: totals.subtotal,
+				ivaPercent: totals.ivaPercent,
+				ivaAmount: totals.ivaAmount,
 				totalAmount: totals.totalAmount,
 				notes: observations || null,
 				createdBy: userId,
@@ -296,7 +303,7 @@ class PurchaseOrderService {
 					throw new Error(ERROR.EMPTY_PRODUCTS);
 				}
 
-				const totals = this.buildOrderTotals(payload.products);
+				const totals = this.buildOrderTotals(payload.products, payload.applyIva, payload.ivaPercent);
 				await this.ensureProductsExist(
 					totals.lines.map(line => line.productId),
 					transaction
@@ -320,7 +327,28 @@ class PurchaseOrderService {
 				);
 
 				updates.subtotal = totals.subtotal;
+				updates.ivaPercent = totals.ivaPercent;
+				updates.ivaAmount = totals.ivaAmount;
 				updates.totalAmount = totals.totalAmount;
+			} else if (payload.applyIva !== undefined || payload.ivaPercent !== undefined) {
+				// Si solo se cambian los parámetros de IVA sin cambiar productos, recalcular totales
+				const ivaApply = payload.applyIva !== undefined ? payload.applyIva : order.ivaPercent > 0;
+				const ivaPerc = payload.ivaPercent !== undefined ? payload.ivaPercent : order.ivaPercent;
+				
+				const details = await PurchaseDetail.findAll({
+					where: { purchaseOrderId: order.id },
+					transaction
+				});
+
+				if (details.length > 0) {
+					const subtotal = details.reduce((sum, d) => sum + Number(d.lineTotal), 0);
+					const ivaAmount = ivaApply ? parseFloat((subtotal * (ivaPerc / 100)).toFixed(2)) : 0;
+					const totalAmount = parseFloat((subtotal + ivaAmount).toFixed(2));
+
+					updates.ivaPercent = ivaApply ? parseFloat(ivaPerc) : 0;
+					updates.ivaAmount = ivaAmount;
+					updates.totalAmount = totalAmount;
+				}
 			}
 
 			await order.update(updates, { transaction });

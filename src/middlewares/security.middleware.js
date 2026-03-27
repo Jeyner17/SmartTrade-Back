@@ -31,20 +31,22 @@ const sanitizeInput = (req, res, next) => {
 /**
  * Función auxiliar para sanitizar objetos recursivamente
  */
+const sanitizeString = (value) => {
+  // Preserva acentos/ñ/símbolos y elimina caracteres de control no imprimibles.
+  return validator.stripLow(value, true).normalize('NFC');
+};
+
 const sanitizeObject = (obj) => {
   const sanitized = {};
 
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
-      // Escape de caracteres HTML peligrosos.
-      // Se restaura '/' (&#x2F;) porque es seguro en contexto JSON/API
-      // y su escape rompería valores como 'DD/MM/YYYY' o URLs.
-      sanitized[key] = validator.escape(value).replace(/&#x2F;/g, '/');
+      sanitized[key] = sanitizeString(value);
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       sanitized[key] = sanitizeObject(value);
     } else if (Array.isArray(value)) {
       sanitized[key] = value.map(item =>
-        typeof item === 'string' ? validator.escape(item) :
+        typeof item === 'string' ? sanitizeString(item) :
         typeof item === 'object' ? sanitizeObject(item) :
         item
       );

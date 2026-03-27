@@ -33,7 +33,8 @@ const DB_SCHEMAS = {
   PURCHASES: 'purchases',
   
   // Módulo: Recepción de Mercancía
-  RECEPTION: 'reception',
+  RECEPTION: 'receptions',
+  RECEPTIONS: 'receptions', // alias para compatibilidad con modelos
   
   // Módulo: Códigos de Barras y QR
   BARCODES: 'barcodes',

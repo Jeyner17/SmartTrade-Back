@@ -70,6 +70,22 @@ module.exports = (sequelize) => {
 			comment: 'Monto total calculado'
 		},
 
+		ivaPercent: {
+			type: DataTypes.DECIMAL(5, 2),
+			allowNull: false,
+			defaultValue: 0,
+			field: 'iva_percent',
+			comment: 'Porcentaje de IVA aplicado'
+		},
+
+		ivaAmount: {
+			type: DataTypes.DECIMAL(12, 2),
+			allowNull: false,
+			defaultValue: 0,
+			field: 'iva_amount',
+			comment: 'Monto del IVA calculado'
+		},
+
 		notes: {
 			type: DataTypes.TEXT,
 			allowNull: true,

@@ -178,7 +178,7 @@ class ProductService {
 
     const updates = { updatedBy: userId };
     const fields = ['name', 'description', 'sku', 'barcode', 'price', 'cost',
-                    'taxPercent', 'categoryId', 'isActive'];
+                    'taxPercent', 'categoryId', 'isActive', 'minStock', 'maxStock', 'location'];
     fields.forEach(f => { if (data[f] !== undefined) updates[f] = data[f]; });
 
     await product.update(updates);

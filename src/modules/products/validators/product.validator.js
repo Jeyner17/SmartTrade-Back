@@ -119,7 +119,20 @@ const validateUpdateProduct = [
 
   body('isActive')
     .optional()
-    .isBoolean().withMessage('isActive debe ser true o false')
+    .isBoolean().withMessage('isActive debe ser true o false'),
+
+  body('minStock')
+    .optional()
+    .isInt({ min: 0 }).withMessage('minStock debe ser un entero >= 0'),
+
+  body('maxStock')
+    .optional({ nullable: true })
+    .isInt({ min: 0 }).withMessage('maxStock debe ser un entero >= 0'),
+
+  body('location')
+    .optional({ nullable: true })
+    .isString().trim()
+    .isLength({ max: 100 }).withMessage('location no puede superar 100 caracteres')
 ];
 
 // ============================================

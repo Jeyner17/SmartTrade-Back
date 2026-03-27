@@ -57,7 +57,15 @@ const validateCreatePurchaseOrder = [
 	body('observations')
 		.optional({ nullable: true })
 		.isString().trim()
-		.isLength({ max: 1000 }).withMessage('observations no puede superar 1000 caracteres')
+		.isLength({ max: 1000 }).withMessage('observations no puede superar 1000 caracteres'),
+
+	body('applyIva')
+		.optional({ nullable: true })
+		.isBoolean().withMessage('applyIva debe ser booleano'),
+
+	body('ivaPercent')
+		.optional({ nullable: true })
+		.isFloat({ min: 0, max: 100 }).withMessage('ivaPercent debe ser un número entre 0 y 100')
 ];
 
 // ============================================
@@ -104,7 +112,15 @@ const validateUpdatePurchaseOrder = [
 
 	body('products.*.unitCost')
 		.optional()
-		.isFloat({ min: 0 }).withMessage('unitCost debe ser un número >= 0')
+		.isFloat({ min: 0 }).withMessage('unitCost debe ser un número >= 0'),
+
+	body('applyIva')
+		.optional({ nullable: true })
+		.isBoolean().withMessage('applyIva debe ser booleano'),
+
+	body('ivaPercent')
+		.optional({ nullable: true })
+		.isFloat({ min: 0, max: 100 }).withMessage('ivaPercent debe ser un número entre 0 y 100')
 ];
 
 // ============================================

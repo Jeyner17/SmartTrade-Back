@@ -62,6 +62,11 @@ const PurchaseOrder = require('../modules/purchases/models/PurchaseOrder')(seque
 const PurchaseDetail = require('../modules/purchases/models/PurchaseDetail')(sequelize);
 const PurchaseStatusHistory = require('../modules/purchases/models/PurchaseStatusHistory')(sequelize);
 
+// Módulo: Receptions (Sprint 10)
+const Reception = require('../modules/receptions/models/Reception')(sequelize);
+const ReceptionDetail = require('../modules/receptions/models/ReceptionDetail')(sequelize);
+const Discrepancy = require('../modules/receptions/models/Discrepancy')(sequelize);
+
 // Módulo: Barcodes (Sprint 11)
 const ScanLog = require('../modules/barcodes/models/ScanLog')(sequelize);
 const ScannerConfig = require('../modules/barcodes/models/ScannerConfig')(sequelize);
@@ -147,6 +152,36 @@ PurchaseOrder.belongsTo(User, { foreignKey: 'updatedBy', as: 'updatedByUser' });
 User.hasMany(PurchaseStatusHistory, { foreignKey: 'changedBy', as: 'purchaseStatusChanges' });
 PurchaseStatusHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUser' });
 
+// ============ SPRINT 10: RECEPTIONS ============
+
+// PurchaseOrder ↔ Reception
+PurchaseOrder.hasMany(Reception, { foreignKey: 'purchaseOrderId', as: 'receptions' });
+Reception.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'purchaseOrder' });
+
+// Reception ↔ ReceptionDetail
+Reception.hasMany(ReceptionDetail, { foreignKey: 'receptionId', as: 'details' });
+ReceptionDetail.belongsTo(Reception, { foreignKey: 'receptionId', as: 'reception' });
+
+// Product ↔ ReceptionDetail
+Product.hasMany(ReceptionDetail, { foreignKey: 'productId', as: 'receptionDetails' });
+ReceptionDetail.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// Reception ↔ Discrepancy
+Reception.hasMany(Discrepancy, { foreignKey: 'receptionId', as: 'discrepancies' });
+Discrepancy.belongsTo(Reception, { foreignKey: 'receptionId', as: 'reception' });
+
+// Product ↔ Discrepancy
+Product.hasMany(Discrepancy, { foreignKey: 'productId', as: 'discrepancies' });
+Discrepancy.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// User ↔ Reception (who created)
+User.hasMany(Reception, { foreignKey: 'createdBy', as: 'receptionsCreated' });
+Reception.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+
+// User ↔ Discrepancy (who reported)
+User.hasMany(Discrepancy, { foreignKey: 'reportedBy', as: 'discrepanciesReported' });
+Discrepancy.belongsTo(User, { foreignKey: 'reportedBy', as: 'reportedByUser' });
+
 // ScanLog ↔ User
 User.hasMany(ScanLog, { foreignKey: 'performedBy', as: 'scanLogs' });
 ScanLog.belongsTo(User, { foreignKey: 'performedBy', as: 'performer' });
@@ -200,6 +235,11 @@ const db = {
   PurchaseOrder,
   PurchaseDetail,
   PurchaseStatusHistory,
+
+  // Receptions
+  Reception,
+  ReceptionDetail,
+  Discrepancy,
 
   // Barcodes
   ScanLog,

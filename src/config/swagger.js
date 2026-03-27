@@ -35,6 +35,7 @@ Usa **JWT Bearer Token**. Para obtener tu token:
 | 7 | Inventory | ✅ Activo |
 | 8 | Suppliers | ✅ Activo |
 | 9 | Purchases | ✅ Activo |
+| 10 | Receptions | ✅ Activo |
     `,
     contact: {
       name: 'LionTech',
@@ -99,6 +100,10 @@ Usa **JWT Bearer Token**. Para obtener tu token:
     {
       name: 'Purchases',
       description: 'Órdenes de compra a proveedores, recepción y reportes de compras'
+    },
+    {
+      name: 'Receptions',
+      description: 'Recepción y control de mercancía: escaneo, verificación, confirmación y reportes de discrepancias'
     }
   ],
 
@@ -848,6 +853,163 @@ Usa **JWT Bearer Token**. Para obtener tu token:
         required: ['reason'],
         properties: {
           reason: { type: 'string', maxLength: 500, example: 'Proveedor no puede cumplir tiempos de entrega' }
+        }
+      },
+
+      // --- RECEPTIONS (Sprint 10) ---
+      Reception: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          receptionNumber: { type: 'string', example: 'REC-20260320-0001', description: 'Número único auto-generado' },
+          purchaseOrderId: { type: 'integer', example: 1 },
+          purchaseOrder: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              orderNumber: { type: 'string', example: 'PO-20260318-0001' }
+            }
+          },
+          receptionDate: { type: 'string', format: 'date', example: '2026-03-20' },
+          status: { type: 'string', enum: ['en_proceso', 'parcial', 'completa', 'cancelada'], example: 'en_proceso' },
+          totalExpected: { type: 'number', format: 'float', example: 1250.00 },
+          totalReceived: { type: 'number', format: 'float', example: 1200.00 },
+          itemsExpected: { type: 'integer', example: 50 },
+          itemsReceived: { type: 'integer', example: 48 },
+          hasDiscrepancies: { type: 'boolean', example: true },
+          observations: { type: 'string', nullable: true, example: 'Recepción parcial' },
+          createdBy: { type: 'integer', example: 1 },
+          createdByUser: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              username: { type: 'string', example: 'admin' },
+              fullName: { type: 'string', example: 'Administrador Sistema' }
+            }
+          },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      ReceptionDetail: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 5 },
+          receptionId: { type: 'integer', example: 1 },
+          productId: { type: 'integer', example: 10 },
+          product: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 10 },
+              name: { type: 'string', example: 'Mouse inalámbrico' },
+              sku: { type: 'string', example: 'MOU-001' },
+              barcode: { type: 'string', example: '7891234567890' }
+            }
+          },
+          quantityExpected: { type: 'integer', example: 20 },
+          quantityReceived: { type: 'integer', example: 18 },
+          status: { type: 'string', enum: ['pendiente', 'parcial', 'completa', 'exceso'], example: 'parcial' },
+          unitPrice: { type: 'number', format: 'float', example: 12.50 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      Discrepancy: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 3 },
+          receptionId: { type: 'integer', example: 1 },
+          productId: { type: 'integer', example: 10 },
+          product: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 10 },
+              name: { type: 'string', example: 'Mouse inalámbrico' },
+              sku: { type: 'string', example: 'MOU-001' }
+            }
+          },
+          quantityExpected: { type: 'integer', example: 20 },
+          quantityReceived: { type: 'integer', example: 18 },
+          type: { type: 'string', enum: ['faltante', 'sobrante', 'dañado', 'otro'], example: 'faltante' },
+          observations: { type: 'string', nullable: true, example: 'Faltan 2 unidades por confirmar' },
+          reportedBy: { type: 'integer', example: 1 },
+          reportedByUser: {
+            type: 'object',
+            nullable: true,
+            properties: {
+              id: { type: 'integer', example: 1 },
+              username: { type: 'string', example: 'admin' },
+              fullName: { type: 'string', example: 'Administrador Sistema' }
+            }
+          },
+          resolved: { type: 'boolean', example: false },
+          resolutionNotes: { type: 'string', nullable: true },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreateReceptionRequest: {
+        type: 'object',
+        required: ['purchaseOrderId', 'receptionDate'],
+        properties: {
+          purchaseOrderId: { type: 'integer', example: 1 },
+          receptionDate: { type: 'string', format: 'date', example: '2026-03-20' },
+          observations: { type: 'string', nullable: true, example: 'Entrega en bodega principal' }
+        }
+      },
+      VerifyBarcodeRequest: {
+        type: 'object',
+        required: ['purchaseOrderId', 'barcode'],
+        properties: {
+          purchaseOrderId: { type: 'integer', example: 1 },
+          barcode: { type: 'string', example: '7891234567890', description: 'Código de barras o SKU' }
+        }
+      },
+      RegisterScanRequest: {
+        type: 'object',
+        required: ['productId', 'quantity'],
+        properties: {
+          productId: { type: 'integer', example: 10 },
+          quantity: { type: 'integer', minimum: 1, example: 5 },
+          notes: { type: 'string', nullable: true, example: 'Cajas en buen estado' }
+        }
+      },
+      ConfirmReceptionRequest: {
+        type: 'object',
+        properties: {
+          observations: { type: 'string', nullable: true, example: 'Mercancía confirmada y ingresada a bodega' }
+        }
+      },
+      ReportDiscrepancyRequest: {
+        type: 'object',
+        required: ['productId', 'type'],
+        properties: {
+          productId: { type: 'integer', example: 10 },
+          quantityExpected: { type: 'integer', nullable: true, example: 20 },
+          quantityReceived: { type: 'integer', nullable: true, example: 18 },
+          type: { type: 'string', enum: ['faltante', 'sobrante', 'dañado', 'otro'], example: 'faltante' },
+          observations: { type: 'string', nullable: true, example: 'Faltan 2 unidades según recuento físico' }
+        }
+      },
+      ListDiscrepanciesQuery: {
+        type: 'object',
+        properties: {
+          receptionId: { type: 'integer', example: 1, description: 'Opcional: filtrar por recepción' },
+          type: { type: 'string', enum: ['faltante', 'sobrante', 'dañado', 'otro'], example: 'faltante', description: 'Opcional: filtrar por tipo' },
+          resolved: { type: 'boolean', example: false, description: 'Opcional: filtrar por estado resuelto' },
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      },
+      ResolveDiscrepancyRequest: {
+        type: 'object',
+        required: ['resolutionNotes'],
+        properties: {
+          resolutionNotes: { type: 'string', maxLength: 500, example: 'Se completó la entrega faltante' }
         }
       }
     },
@@ -3331,6 +3493,212 @@ Requiere permiso \`inventory:view\`.`,
           200: { description: 'Reporte generado exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
           401: { $ref: '#/components/responses/Unauthorized' },
           403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    // RECEPTIONS (Sprint 10)
+    '/receptions': {
+      get: {
+        tags: ['Receptions'],
+        summary: 'Listar recepciones',
+        description: 'Devuelve lista de recepciones con filtros por estado, fecha y paginación. Requiere permiso `receptions:view`.',
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['en_proceso', 'parcial', 'completa', 'cancelada'] }, example: 'en_proceso' },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-01' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-03-31' },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 }
+        ],
+        responses: {
+          200: { description: 'Lista de recepciones obtenida', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+      post: {
+        tags: ['Receptions'],
+        summary: 'Crear recepción',
+        description: 'Registra una nueva recepción vinculada a orden de compra y genera automáticamente el número. Requiere permiso `receptions:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateReceptionRequest' },
+              example: { purchaseOrderId: 1, receptionDate: '2026-03-20', observations: 'Entrega en bodega principal' }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Recepción creada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/{id}': {
+      get: {
+        tags: ['Receptions'],
+        summary: 'Obtener recepción por ID',
+        description: 'Retorna el detalle completo de una recepción incluyendo líneas de detalle y discrepancias. Requiere permiso `receptions:view`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        responses: {
+          200: { description: 'Detalle de recepción obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/receptions/verify-barcode': {
+      post: {
+        tags: ['Receptions'],
+        summary: 'Verificar producto por código de barras',
+        description: 'Busca un producto en la orden de compra por código de barras o SKU. Retorna datos del producto si existe en la orden. Requiere permiso `receptions:view`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/VerifyBarcodeRequest' },
+              example: { purchaseOrderId: 1, barcode: '7891234567890' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Producto encontrado en la orden', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/{id}/scan': {
+      post: {
+        tags: ['Receptions'],
+        summary: 'Registrar escaneo de producto',
+        description: 'Registra la cantidad recibida de un producto y actualiza automáticamente el estado de la recepción. Requiere permiso `receptions:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RegisterScanRequest' },
+              example: { productId: 10, quantity: 5, notes: 'Cajas en buen estado' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Escaneo registrado exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/{id}/confirm': {
+      post: {
+        tags: ['Receptions'],
+        summary: 'Confirmar recepción completa',
+        description: 'Finaliza la recepción y genera movimientos de stock automáticamente. Requiere permiso `receptions:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ConfirmReceptionRequest' },
+              example: { observations: 'Mercancía confirmada y ingresada a bodega' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Recepción confirmada y stock actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/{id}/discrepancies': {
+      post: {
+        tags: ['Receptions'],
+        summary: 'Reportar discrepancia',
+        description: 'Registra inconsistencias encontradas (faltantes, sobrantes, dañados) en la recepción para posterior seguimiento. Requiere permiso `receptions:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ReportDiscrepancyRequest' },
+              example: { productId: 10, quantityExpected: 20, quantityReceived: 18, type: 'faltante', observations: 'Faltan 2 unidades según recuento físico' }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Discrepancia reportada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/discrepancies': {
+      get: {
+        tags: ['Receptions'],
+        summary: 'Listar discrepancias',
+        description: 'Devuelve lista de discrepancias reportadas con filtros por tipo, estado y paginación. Requiere permiso `receptions:view`.',
+        parameters: [
+          { name: 'type', in: 'query', schema: { type: 'string', enum: ['faltante', 'sobrante', 'dañado', 'otro'] }, example: 'faltante' },
+          { name: 'resolved', in: 'query', schema: { type: 'boolean' }, example: false },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 }, example: 1 },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 }, example: 10 }
+        ],
+        responses: {
+          200: { description: 'Lista de discrepancias obtenida', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/receptions/discrepancies/{id}/resolve': {
+      post: {
+        tags: ['Receptions'],
+        summary: 'Resolver discrepancia',
+        description: 'Marca una discrepancia como resuelta con notas de resolución. Requiere permiso `receptions:edit`.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 3 }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ResolveDiscrepancyRequest' },
+              example: { resolutionNotes: 'Se completó la entrega faltante' }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Discrepancia resuelta exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
           422: { $ref: '#/components/responses/ValidationError' }
         }
       }

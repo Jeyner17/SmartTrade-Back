@@ -137,6 +137,19 @@ const modules = [
   },
 
   // ==========================================
+  // SPRINT 10: RECEPCIÓN DE MERCANCÍA
+  // ==========================================
+  {
+    name: 'receptions',
+    route: '/receptions',
+    path: '../modules/receptions/routes/reception.routes',
+    enabled: true,
+    description: 'Recepción y control de mercancía',
+    version: '1.0.0',
+    sprint: 10
+  },
+
+  // ==========================================
   // SPRINT 11: ESCANEO DE CÓDIGOS DE BARRAS/QR
   // ==========================================
   {
