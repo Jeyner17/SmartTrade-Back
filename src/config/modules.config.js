@@ -163,6 +163,32 @@ const modules = [
   },
 
   // ==========================================
+  // SPRINT 12: PUNTO DE VENTA (POS)
+  // ==========================================
+  {
+    name: 'pos',
+    route: '/pos',
+    path: '../modules/sales/routes/sale.routes',
+    enabled: true,
+    description: 'Punto de venta, carrito y ventas',
+    version: '1.0.0',
+    sprint: 12
+  },
+
+  // ==========================================
+  // SPRINT 14: GESTIÓN DE CAJA
+  // ==========================================
+  {
+    name: 'cashRegister',
+    route: '/cash',
+    path: '../modules/cashRegister/routes/cash-register.routes',
+    enabled: true,
+    description: 'Gestión de caja, sesiones y arqueos',
+    version: '1.0.0',
+    sprint: 14
+  },
+
+  // ==========================================
   // MÁS MÓDULOS FUTUROS...
   // ==========================================
 ];

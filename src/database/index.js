@@ -71,6 +71,18 @@ const Discrepancy = require('../modules/receptions/models/Discrepancy')(sequeliz
 const ScanLog = require('../modules/barcodes/models/ScanLog')(sequelize);
 const ScannerConfig = require('../modules/barcodes/models/ScannerConfig')(sequelize);
 
+// Módulo: POS / Sales (Sprint 12)
+const Customer = require('../modules/sales/models/Customer')(sequelize);
+const SaleSession = require('../modules/sales/models/SaleSession')(sequelize);
+const SaleSessionItem = require('../modules/sales/models/SaleSessionItem')(sequelize);
+const Sale = require('../modules/sales/models/Sale')(sequelize);
+const SaleDetail = require('../modules/sales/models/SaleDetail')(sequelize);
+
+// Módulo: Cash Register (Sprint 14)
+const CashSession = require('../modules/cashRegister/models/CashSession')(sequelize);
+const CashMovement = require('../modules/cashRegister/models/CashMovement')(sequelize);
+const CashCount = require('../modules/cashRegister/models/CashCount')(sequelize);
+
 // ============================================
 // DEFINIR RELACIONES
 // ============================================
@@ -193,6 +205,62 @@ ScanLog.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 User.hasOne(ScannerConfig, { foreignKey: 'userId', as: 'scannerConfig' });
 ScannerConfig.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// ============ SPRINT 12: POS / SALES ============
+
+// Customer ↔ Sale
+Customer.hasMany(Sale, { foreignKey: 'customerId', as: 'sales' });
+Sale.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// User (cashier) ↔ Sale
+User.hasMany(Sale, { foreignKey: 'cashierId', as: 'salesByCashier' });
+Sale.belongsTo(User, { foreignKey: 'cashierId', as: 'cashier' });
+
+// Sale ↔ SaleDetail
+Sale.hasMany(SaleDetail, { foreignKey: 'saleId', as: 'details' });
+SaleDetail.belongsTo(Sale, { foreignKey: 'saleId', as: 'sale' });
+
+// Product ↔ SaleDetail
+Product.hasMany(SaleDetail, { foreignKey: 'productId', as: 'saleDetails' });
+SaleDetail.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// SaleSession ↔ SaleSessionItem
+SaleSession.hasMany(SaleSessionItem, { foreignKey: 'sessionId', as: 'items' });
+SaleSessionItem.belongsTo(SaleSession, { foreignKey: 'sessionId', as: 'session' });
+
+// Product ↔ SaleSessionItem
+Product.hasMany(SaleSessionItem, { foreignKey: 'productId', as: 'saleSessionItems' });
+SaleSessionItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// Customer ↔ SaleSession
+Customer.hasMany(SaleSession, { foreignKey: 'customerId', as: 'saleSessions' });
+SaleSession.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// User (cashier) ↔ SaleSession
+User.hasMany(SaleSession, { foreignKey: 'cashierId', as: 'openSaleSessions' });
+SaleSession.belongsTo(User, { foreignKey: 'cashierId', as: 'cashier' });
+
+// SaleSession ↔ Sale
+SaleSession.hasMany(Sale, { foreignKey: 'sessionId', as: 'generatedSales' });
+Sale.belongsTo(SaleSession, { foreignKey: 'sessionId', as: 'session' });
+
+// ============ SPRINT 14: CASH REGISTER ============
+
+// User (cashier) ↔ CashSession
+User.hasMany(CashSession, { foreignKey: 'casierId', as: 'cashSessions' });
+CashSession.belongsTo(User, { foreignKey: 'casierId', as: 'cashier' });
+
+// CashSession ↔ CashMovement
+CashSession.hasMany(CashMovement, { foreignKey: 'cashSessionId', as: 'movements' });
+CashMovement.belongsTo(CashSession, { foreignKey: 'cashSessionId', as: 'session' });
+
+// CashSession ↔ CashCount
+CashSession.hasOne(CashCount, { foreignKey: 'cashSessionId', as: 'count' });
+CashCount.belongsTo(CashSession, { foreignKey: 'cashSessionId', as: 'session' });
+
+// Sale ↔ CashMovement
+Sale.hasMany(CashMovement, { foreignKey: 'saleId', as: 'cashMovements' });
+CashMovement.belongsTo(Sale, { foreignKey: 'saleId', as: 'sale' });
+
 // ============================================
 // EXPORTAR
 // ============================================
@@ -243,7 +311,19 @@ const db = {
 
   // Barcodes
   ScanLog,
-  ScannerConfig
+  ScannerConfig,
+
+  // POS / Sales
+  Customer,
+  SaleSession,
+  SaleSessionItem,
+  Sale,
+  SaleDetail,
+
+  // Cash Register
+  CashSession,
+  CashMovement,
+  CashCount
 };
 
 module.exports = db;

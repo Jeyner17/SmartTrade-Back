@@ -30,7 +30,7 @@ class RoutesLoader {
         app.use(fullRoute, routes);
         loadedCount++;
       } catch (error) {
-        logger.error(`❌ Error al cargar módulo: ${module.name} - ${error.message}`);
+        logger.error(`❌ Error al cargar módulo: ${module.name} - ${error.message}`, { stack: error.stack });
         errorCount++;
       }
     });

@@ -36,6 +36,8 @@ Usa **JWT Bearer Token**. Para obtener tu token:
 | 8 | Suppliers | ✅ Activo |
 | 9 | Purchases | ✅ Activo |
 | 10 | Receptions | ✅ Activo |
+| 12 | POS / Sales | ✅ Activo |
+| 14 | Cash Register | ✅ Activo |
     `,
     contact: {
       name: 'LionTech',
@@ -104,6 +106,14 @@ Usa **JWT Bearer Token**. Para obtener tu token:
     {
       name: 'Receptions',
       description: 'Recepción y control de mercancía: escaneo, verificación, confirmación y reportes de discrepancias'
+    },
+    {
+      name: 'POS',
+      description: 'Punto de venta: carrito, pagos, clientes rápidos, historial y anulaciones de ventas'
+    },
+    {
+      name: 'Cash Register',
+      description: 'Gestión de caja: apertura, movimientos, arqueos, cierre y reportes de sesiones de caja'
     }
   ],
 
@@ -3700,6 +3710,574 @@ Requiere permiso \`inventory:view\`.`,
           403: { $ref: '#/components/responses/Forbidden' },
           404: { $ref: '#/components/responses/NotFound' },
           422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    // POS / SALES (Sprint 12)
+    '/pos/sales': {
+      post: {
+        tags: ['POS'],
+        summary: 'Crear venta directa',
+        description: 'Genera una venta directa sin sesión de carrito. Requiere permiso `pos:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['products', 'paymentMethod'],
+                properties: {
+                  products: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      required: ['productId', 'quantity', 'unitPrice'],
+                      properties: {
+                        productId: { type: 'integer', example: 10 },
+                        quantity: { type: 'integer', example: 2 },
+                        unitPrice: { type: 'number', example: 12.50 }
+                      }
+                    }
+                  },
+                  paymentMethod: { type: 'string', enum: ['efectivo', 'tarjeta', 'transferencia'], example: 'efectivo' },
+                  discountType: { type: 'string', enum: ['none', 'percentage', 'fixed'], example: 'none' },
+                  discountValue: { type: 'number', example: 0 },
+                  customerId: { type: 'integer', nullable: true, example: 3 },
+                  amountReceived: { type: 'number', example: 30.00 },
+                  notes: { type: 'string', example: 'Venta rápida mostrador' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Venta creada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/cart/items': {
+      post: {
+        tags: ['POS'],
+        summary: 'Agregar producto al carrito',
+        description: 'Crea una sesión de carrito o agrega producto a una sesión existente. Requiere permiso `pos:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['productId'],
+                properties: {
+                  sessionId: { type: 'integer', nullable: true, example: 15 },
+                  productId: { type: 'integer', example: 10 },
+                  quantity: { type: 'integer', minimum: 1, example: 1 },
+                  customerId: { type: 'integer', nullable: true, example: 3 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Producto agregado al carrito', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/cart/{sessionId}/items/{productId}': {
+      put: {
+        tags: ['POS'],
+        summary: 'Actualizar cantidad de un item del carrito',
+        description: 'Modifica la cantidad de un producto en la sesión de carrito. Requiere permiso `pos:edit`.',
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' }, example: 15 },
+          { name: 'productId', in: 'path', required: true, schema: { type: 'integer' }, example: 10 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['quantity'],
+                properties: {
+                  quantity: { type: 'integer', minimum: 0, example: 3 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Cantidad actualizada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+      delete: {
+        tags: ['POS'],
+        summary: 'Eliminar item del carrito',
+        description: 'Elimina un producto específico de la sesión de carrito. Requiere permiso `pos:edit`.',
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' }, example: 15 },
+          { name: 'productId', in: 'path', required: true, schema: { type: 'integer' }, example: 10 }
+        ],
+        responses: {
+          200: { description: 'Producto eliminado del carrito', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/pos/cart/{sessionId}/discount': {
+      post: {
+        tags: ['POS'],
+        summary: 'Aplicar descuento al carrito',
+        description: 'Aplica descuento fijo o porcentual al total del carrito. Requiere permiso `pos:edit`.',
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' }, example: 15 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['discountType', 'value'],
+                properties: {
+                  discountType: { type: 'string', enum: ['percentage', 'fixed'], example: 'percentage' },
+                  value: { type: 'number', minimum: 0, example: 10 },
+                  reason: { type: 'string', example: 'Cliente frecuente' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Descuento aplicado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/cart/{sessionId}/total': {
+      get: {
+        tags: ['POS'],
+        summary: 'Calcular total del carrito',
+        description: 'Retorna subtotal, IVA, descuento y total de la sesión activa. Requiere permiso `pos:view`.',
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' }, example: 15 }
+        ],
+        responses: {
+          200: { description: 'Totales calculados', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/pos/cart/{sessionId}/payment': {
+      post: {
+        tags: ['POS'],
+        summary: 'Procesar pago de carrito',
+        description: 'Finaliza la venta de una sesión de carrito y genera ticket. Requiere permiso `pos:create`.',
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' }, example: 15 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['paymentMethod'],
+                properties: {
+                  paymentMethod: { type: 'string', enum: ['efectivo', 'tarjeta', 'transferencia'], example: 'efectivo' },
+                  amountReceived: { type: 'number', example: 50.00 },
+                  customerId: { type: 'integer', nullable: true, example: 3 },
+                  notes: { type: 'string', example: 'Pago exacto en caja 1' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Pago procesado y venta generada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/customers/search': {
+      get: {
+        tags: ['POS'],
+        summary: 'Buscar cliente para POS',
+        description: 'Busca clientes por nombre, documento o teléfono. Requiere permiso `pos:view`.',
+        parameters: [
+          { name: 'term', in: 'query', required: true, schema: { type: 'string' }, example: 'maria' }
+        ],
+        responses: {
+          200: { description: 'Clientes encontrados', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/customers/quick': {
+      post: {
+        tags: ['POS'],
+        summary: 'Crear cliente rápido',
+        description: 'Registra cliente mínimo para venta inmediata en POS. Requiere permiso `pos:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['fullName'],
+                properties: {
+                  fullName: { type: 'string', example: 'María López' },
+                  documentNumber: { type: 'string', example: '0912345678' },
+                  phone: { type: 'string', example: '0991234567' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Cliente creado rápidamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/sales/today': {
+      get: {
+        tags: ['POS'],
+        summary: 'Listar ventas del día',
+        description: 'Retorna ventas del día con filtros opcionales por cajero y rango horario. Requiere permiso `sales:view`.',
+        parameters: [
+          { name: 'cashierId', in: 'query', schema: { type: 'integer' }, example: 4 },
+          { name: 'startHour', in: 'query', schema: { type: 'string', example: '08:00' } },
+          { name: 'endHour', in: 'query', schema: { type: 'string', example: '18:00' } }
+        ],
+        responses: {
+          200: { description: 'Ventas del día obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/sales/{id}': {
+      get: {
+        tags: ['POS'],
+        summary: 'Obtener detalle de venta',
+        description: 'Retorna cabecera y detalle de una venta por ID. Requiere permiso `sales:view`.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 101 }
+        ],
+        responses: {
+          200: { description: 'Detalle de venta obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/pos/sales/{id}/void': {
+      post: {
+        tags: ['POS'],
+        summary: 'Anular venta',
+        description: 'Anula una venta completada y revierte inventario. Requiere permiso `sales:edit`.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 101 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['reason'],
+                properties: {
+                  reason: { type: 'string', example: 'Cobro duplicado' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Venta anulada exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/pos/products/popular': {
+      get: {
+        tags: ['POS'],
+        summary: 'Productos más vendidos',
+        description: 'Retorna ranking de productos más vendidos por período. Requiere permiso `sales:view`.',
+        parameters: [
+          { name: 'period', in: 'query', schema: { type: 'string', enum: ['day', 'week', 'month', 'range'], default: 'day' }, example: 'day' },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-04-01' },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, example: '2026-04-20' },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50, default: 10 }, example: 10 }
+        ],
+        responses: {
+          200: { description: 'Ranking generado exitosamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    // ============ CASH REGISTER ENDPOINTS ============
+
+    '/cash/sessions/open': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '1. Abrir Caja',
+        description: 'Inicia un turno de caja para un cajero. Requiere permiso `cash_register:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { casierId: { type: 'integer', example: 1 }, cashBoxNumber: { type: 'string', example: 'Caja 1' }, baseAmount: { type: 'number', example: 100 } }, required: ['casierId', 'cashBoxNumber'] }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Caja abierta correctamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/sales': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '2. Registrar Venta en Caja',
+        description: 'Vincula una venta procesada con la caja activa. Requiere permiso `cash_register:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { saleId: { type: 'integer', example: 10 }, amount: { type: 'number' }, paymentMethod: { type: 'string', enum: ['CASH', 'CARD', 'TRANSFER', 'CREDIT'] }, reference: { type: 'string' } }, required: ['saleId', 'amount', 'paymentMethod'] }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Venta registrada en caja', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/movements/income': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '3. Registrar Ingreso',
+        description: 'Registra dinero que entra a caja (pagos de crédito, otros ingresos). Requiere permiso `cash_register:create`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { sessionId: { type: 'integer', example: 1 }, amount: { type: 'number' }, concept: { type: 'string' }, paymentMethod: { type: 'string', enum: ['CASH', 'CARD', 'TRANSFER', 'CREDIT'] }, description: { type: 'string' }, reference: { type: 'string' } }, required: ['sessionId', 'amount', 'concept'] }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Ingreso registrado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/movements/expense': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '4. Registrar Egreso',
+        description: 'Registra dinero que sale de caja (gastos menores, retiros). Requiere permiso `cash_register:edit`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { sessionId: { type: 'integer', example: 1 }, amount: { type: 'number' }, concept: { type: 'string' }, description: { type: 'string' }, authorizedBy: { type: 'integer', example: 1 }, reference: { type: 'string' } }, required: ['sessionId', 'amount', 'concept'] }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Egreso registrado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/movements/withdrawal': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '5. Retiro de Efectivo',
+        description: 'Retira dinero de la caja para enviar a caja fuerte. Requiere permiso `cash_register:edit`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { sessionId: { type: 'integer', example: 1 }, amount: { type: 'number' }, receivedBy: { type: 'integer', example: 1 }, description: { type: 'string' }, reference: { type: 'string' } }, required: ['sessionId', 'amount', 'receivedBy'] }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Retiro registrado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/sessions/{sessionId}/status': {
+      get: {
+        tags: ['Cash Register'],
+        summary: '6. Obtener Estado de Caja',
+        description: 'Devuelve el resumen de la caja en un momento dado. Requiere permiso `cash_register:view`.',
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'Estado de caja obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/cash/sessions/{sessionId}/examination': {
+      get: {
+        tags: ['Cash Register'],
+        summary: '7. Calcular Arqueo',
+        description: 'Calcula el balance esperado de la caja (pre-cierre). Requiere permiso `cash_register:view`.',
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'Arqueo calculado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/cash/sessions/close': {
+      post: {
+        tags: ['Cash Register'],
+        summary: '8. Cerrar Caja',
+        description: 'Finaliza el turno de caja y registra conteo final. Requiere permiso `cash_register:edit`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { sessionId: { type: 'integer', example: 1 }, countData: { type: 'object', example: { note_100: 10, note_50: 5, coin_1: 10 } }, countedBy: { type: 'integer', example: 1 }, verifiedBy: { type: 'integer', example: 1 }, observations: { type: 'string' } }, required: ['sessionId', 'countData', 'countedBy'] }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Caja cerrada correctamente', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          400: { $ref: '#/components/responses/BadRequest' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/sessions': {
+      get: {
+        tags: ['Cash Register'],
+        summary: '9. Obtener Historial de Caja',
+        description: 'Lista todas las sesiones de caja con filtros opcionales. Requiere permiso `cash_register:view`.',
+        parameters: [
+          { name: 'casierId', in: 'query', schema: { type: 'integer' } },
+          { name: 'cashBoxNumber', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['OPEN', 'COUNTED', 'CLOSED'] } },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 500, default: 100 } },
+          { name: 'offset', in: 'query', schema: { type: 'integer', minimum: 0, default: 0 } }
+        ],
+        responses: {
+          200: { description: 'Sesiones de caja obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' }
+        }
+      }
+    },
+
+    '/cash/sessions/{sessionId}': {
+      get: {
+        tags: ['Cash Register'],
+        summary: '10. Obtener Detalle de Sesión',
+        description: 'Devuelve información completa de una sesión de caja. Requiere permiso `cash_register:view`.',
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'Detalle de sesión obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+
+    '/cash/sessions/{sessionId}/report': {
+      get: {
+        tags: ['Cash Register'],
+        summary: '11. Generar Reporte PDF',
+        description: 'Genera el reporte oficial de cierre de caja en PDF. Requiere permiso `cash_register:view`.',
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'Reporte generado', content: { 'application/pdf': { schema: { type: 'string', format: 'binary' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' }
         }
       }
     }
