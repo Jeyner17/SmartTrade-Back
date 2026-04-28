@@ -20,6 +20,17 @@ module.exports = {
         { transaction }
       );
 
+      // Antes de recrear tablas, eliminar tipos ENUM antiguos para evitar errores
+      await queryInterface.sequelize.query(
+        `DROP TYPE IF EXISTS "cashRegister"."enum_cash_movements_payment_method";`,
+        { transaction }
+      );
+
+      await queryInterface.sequelize.query(
+        `DROP TYPE IF EXISTS "cashRegister"."enum_cash_movements_type";`,
+        { transaction }
+      );
+
       await queryInterface.createTable(
         'cash_sessions',
         {

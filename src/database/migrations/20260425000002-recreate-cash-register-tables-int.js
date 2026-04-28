@@ -120,6 +120,16 @@ module.exports = {
       );
 
       // 2. Crear tabla cash_movements
+      // Asegurar que tipos ENUM previos no queden en la BD (idempotencia)
+      await queryInterface.sequelize.query(
+        `DROP TYPE IF EXISTS "cashRegister"."enum_cash_movements_payment_method";`,
+        { transaction }
+      );
+
+      await queryInterface.sequelize.query(
+        `DROP TYPE IF EXISTS "cashRegister"."enum_cash_movements_type";`,
+        { transaction }
+      );
       await queryInterface.createTable(
         'cash_movements',
         {
