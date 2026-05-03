@@ -18,7 +18,7 @@ module.exports = (sequelize) => {
       casierId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        field: 'casier_id',
+        field: 'cashier_id',
         comment: 'ID del cajero'
       },
       openedAt: {
@@ -89,7 +89,7 @@ module.exports = (sequelize) => {
       tableName: 'cash_sessions',
       timestamps: true,
       indexes: [
-        { fields: ['casier_id'] },
+        { fields: ['cashier_id'] },
         { fields: ['cash_box_number'] },
         { fields: ['status'] },
         { fields: ['opened_at'] }
