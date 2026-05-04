@@ -115,6 +115,15 @@ Usa **JWT Bearer Token**. Para obtener tu token:
       name: 'Cash Register',
       description: 'Gestión de caja: apertura, movimientos, arqueos, cierre y reportes de sesiones de caja'
     }
+    ,
+    {
+      name: 'Expenses',
+      description: 'Gestión de gastos operativos, comprobantes y gastos recurrentes'
+    },
+    {
+      name: 'Credits',
+      description: 'Gestión de créditos, pagos y estados de cuenta (cuentas por cobrar)'
+    }
   ],
 
   // ============================================
@@ -4066,6 +4075,114 @@ Requiere permiso \`inventory:view\`.`,
       }
     },
 
+    // ============ EXPENSES (Sprint 16) ============
+    '/expenses/categories': {
+      post: {
+        tags: ['Expenses'],
+        summary: 'Crear categoría de gasto',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name', 'type'], properties: { name: { type: 'string' }, description: { type: 'string' }, type: { type: 'string', enum: ['FIXED', 'VARIABLE'] } } } } } },
+        responses: { 201: { description: 'Categoría creada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } }
+      },
+      get: {
+        tags: ['Expenses'],
+        summary: 'Listar categorías de gastos',
+        parameters: [{ name: 'type', in: 'query', schema: { type: 'string' } }],
+        responses: { 200: { description: 'Lista de categorías', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } }
+      }
+    },
+
+    '/expenses/expenses': {
+      post: {
+        tags: ['Expenses'],
+        summary: 'Registrar gasto',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['amount', 'categoryId', 'date'], properties: { amount: { type: 'number' }, categoryId: { type: 'integer' }, concept: { type: 'string' }, date: { type: 'string', format: 'date' }, paymentMethod: { type: 'string' }, receiptNumber: { type: 'string' }, supplierId: { type: 'integer' }, notes: { type: 'string' } } } } } },
+        responses: { 201: { description: 'Gasto creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } }
+      },
+      get: {
+        tags: ['Expenses'],
+        summary: 'Listar gastos',
+        parameters: [{ name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' } }, { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' } }, { name: 'categoryId', in: 'query', schema: { type: 'integer' } }, { name: 'supplierId', in: 'query', schema: { type: 'integer' } }, { name: 'page', in: 'query', schema: { type: 'integer' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }],
+        responses: { 200: { description: 'Lista paginada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } }
+      }
+    },
+
+    '/expenses/expenses/{id}': {
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+      get: { tags: ['Expenses'], summary: 'Obtener detalle de gasto', responses: { 200: { description: 'Detalle del gasto', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } },
+      put: { tags: ['Expenses'], summary: 'Actualizar gasto', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { amount: { type: 'number' }, categoryId: { type: 'integer' }, concept: { type: 'string' }, date: { type: 'string', format: 'date' }, paymentMethod: { type: 'string' }, receiptNumber: { type: 'string' }, supplierId: { type: 'integer' }, notes: { type: 'string' } } } } } }, responses: { 200: { description: 'Gasto actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' }, 422: { $ref: '#/components/responses/ValidationError' } } },
+      delete: { tags: ['Expenses'], summary: 'Eliminar gasto', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } } } }, responses: { 200: { description: 'Gasto eliminado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/expenses/expenses/{id}/receipt': {
+      post: {
+        tags: ['Expenses'],
+        summary: 'Subir comprobante',
+        description: 'Campo form-data: comprobante.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { comprobante: { type: 'string', format: 'binary' } } } } } },
+        responses: { 201: { description: 'Comprobante subido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 400: { $ref: '#/components/schemas/ApiError' } }
+      }
+    },
+
+    '/expenses/reports/by-category': {
+      get: { tags: ['Expenses'], summary: 'Obtener gastos por categoría', parameters: [{ name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' } }, { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' } }], responses: { 200: { description: 'Reporte por categoría', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+    '/expenses/reports/total': {
+      get: { tags: ['Expenses'], summary: 'Total de gastos por periodo', parameters: [{ name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' } }, { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' } }], responses: { 200: { description: 'Totales de gastos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+
+    '/expenses/recurrings': {
+      post: { tags: ['Expenses'], summary: 'Programar gasto recurrente', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['amount', 'categoryId', 'frequency', 'startDate', 'nextDate'], properties: { amount: { type: 'number' }, categoryId: { type: 'integer' }, concept: { type: 'string' }, frequency: { type: 'string', enum: ['DAILY', 'WEEKLY', 'MONTHLY'] }, startDate: { type: 'string', format: 'date' }, nextDate: { type: 'string', format: 'date' }, active: { type: 'boolean' } } } } } }, responses: { 201: { description: 'Gasto recurrente creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } } },
+      get: { tags: ['Expenses'], summary: 'Obtener gastos recurrentes', parameters: [{ name: 'active', in: 'query', schema: { type: 'boolean' } }], responses: { 200: { description: 'Lista de gastos recurrentes', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+
+    // ============ CREDITS (Sprint 15) ============
+    '/credits/customers': {
+      post: { tags: ['Credits'], summary: 'Crear cliente para crédito', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['fullName', 'documentNumber'], properties: { fullName: { type: 'string' }, documentNumber: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' }, email: { type: 'string' }, creditLimit: { type: 'number' }, references: { type: 'string' } } } } } }, responses: { 201: { description: 'Cliente de crédito creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } } }
+    },
+
+    '/credits/credits': {
+      post: { tags: ['Credits'], summary: 'Crear venta a crédito', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['saleId', 'customerId', 'termDays'], properties: { saleId: { type: 'integer' }, customerId: { type: 'integer' }, termDays: { type: 'integer' }, interestRate: { type: 'number' }, observations: { type: 'string' } } } } } }, responses: { 201: { description: 'Crédito creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } } },
+      get: { tags: ['Credits'], summary: 'Listar créditos activos', parameters: [{ name: 'customerId', in: 'query', schema: { type: 'integer' } }, { name: 'status', in: 'query', schema: { type: 'string' } }, { name: 'vencidos', in: 'query', schema: { type: 'boolean' } }, { name: 'porVencerDias', in: 'query', schema: { type: 'integer' } }, { name: 'page', in: 'query', schema: { type: 'integer' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }], responses: { 200: { description: 'Listado de créditos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+
+    '/credits/credits/{id}': {
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+      get: { tags: ['Credits'], summary: 'Obtener detalle de crédito', responses: { 200: { description: 'Detalle de crédito', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/credits/credits/{id}/payments': {
+      post: { tags: ['Credits'], summary: 'Registrar pago de crédito', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['amountPaid', 'paymentMethod'], properties: { amountPaid: { type: 'number' }, paymentMethod: { type: 'string' }, paymentDate: { type: 'string', format: 'date' }, notes: { type: 'string' } } } } } }, responses: { 201: { description: 'Pago registrado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' }, 422: { $ref: '#/components/responses/ValidationError' } } }
+    },
+
+    '/credits/customers/{customerId}/statement': {
+      get: { tags: ['Credits'], summary: 'Obtener estado de cuenta de cliente', parameters: [{ name: 'customerId', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Estado de cuenta', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/credits/credits/{id}/late-interest': {
+      get: { tags: ['Credits'], summary: 'Calcular intereses por mora', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Interés calculado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/credits/credits/{id}/reminders': {
+      post: { tags: ['Credits'], summary: 'Generar recordatorio de pago', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['daysBeforeDue', 'channel'], properties: { daysBeforeDue: { type: 'integer' }, channel: { type: 'string', enum: ['EMAIL', 'SMS'] } } } } } }, responses: { 201: { description: 'Recordatorio creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 422: { $ref: '#/components/responses/ValidationError' } } }
+    },
+
+    '/credits/customers/delinquent': {
+      get: { tags: ['Credits'], summary: 'Listar clientes morosos', parameters: [{ name: 'minLateDays', in: 'query', schema: { type: 'integer' } }], responses: { 200: { description: 'Clientes morosos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+
+    '/credits/credits/{id}/forgive': {
+      post: { tags: ['Credits'], summary: 'Condonar deuda', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['amountForgiven', 'reason', 'authorizedBy'], properties: { amountForgiven: { type: 'number' }, reason: { type: 'string' }, authorizedBy: { type: 'integer' } } } } } }, responses: { 200: { description: 'Deuda condonada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/credits/credits/{id}/refinance': {
+      post: { tags: ['Credits'], summary: 'Refinanciar crédito', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['termDays', 'interestRate'], properties: { termDays: { type: 'integer' }, interestRate: { type: 'number' }, moraRateDaily: { type: 'number' }, reason: { type: 'string' }, authorizedBy: { type: 'integer' }, observations: { type: 'string' } } } } } }, responses: { 200: { description: 'Crédito refinanciado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } }, 404: { $ref: '#/components/responses/NotFound' } } }
+    },
+
+    '/credits/customers/{customerId}/credits/history': {
+      get: { tags: ['Credits'], summary: 'Historial de créditos de cliente', parameters: [{ name: 'customerId', in: 'path', required: true, schema: { type: 'integer' } }, { name: 'includePaid', in: 'query', schema: { type: 'boolean' } }], responses: { 200: { description: 'Historial de créditos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+    
     // ============ CASH REGISTER ENDPOINTS ============
 
     '/cash/sessions/open': {

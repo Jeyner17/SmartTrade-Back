@@ -134,11 +134,47 @@ const uploadProductImage = multer({
 
 const getProductImageUrl = (filename) => `/uploads/products/${filename}`;
 
+// ============================================
+// RECIBOS / COMPROBANTES
+// ============================================
+const receiptStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads/receipts');
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `receipt-${uniqueSuffix}${ext}`);
+  }
+});
+
+const receiptFileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
+  if (allowed.includes(file.mimetype)) cb(null, true);
+  else cb(new Error('Formato no válido. Use PDF, JPG o PNG'), false);
+};
+
+const uploadReceipt = multer({
+  storage: receiptStorage,
+  fileFilter: receiptFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+const getReceiptUrl = (filename) => `/uploads/receipts/${filename}`;
+
 module.exports = {
   uploadLogo,
   uploadProductImage,
+  uploadReceipt,
   deleteFile,
   getFileUrl,
   getProductImageUrl,
+  getReceiptUrl,
   fileExists
 };

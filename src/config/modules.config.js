@@ -189,6 +189,32 @@ const modules = [
   },
 
   // ==========================================
+  // SPRINT 15: CREDITOS Y CUENTAS POR COBRAR
+  // ==========================================
+  {
+    name: 'credits',
+    route: '/credits',
+    path: '../modules/credits/routes/credit.routes',
+    enabled: true,
+    description: 'Gestion de creditos y cuentas por cobrar',
+    version: '1.0.0',
+    sprint: 15
+  },
+
+  // ==========================================
+  // SPRINT 16: GASTOS OPERATIVOS
+  // ==========================================
+  {
+    name: 'expenses',
+    route: '/expenses',
+    path: '../modules/expenses/routes/expense.routes',
+    enabled: true,
+    description: 'Gastos operativos y reportes',
+    version: '1.0.0',
+    sprint: 16
+  },
+
+  // ==========================================
   // MÁS MÓDULOS FUTUROS...
   // ==========================================
 ];

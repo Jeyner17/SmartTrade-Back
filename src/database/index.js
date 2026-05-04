@@ -83,6 +83,19 @@ const CashSession = require('../modules/cashRegister/models/CashSession')(sequel
 const CashMovement = require('../modules/cashRegister/models/CashMovement')(sequelize);
 const CashCount = require('../modules/cashRegister/models/CashCount')(sequelize);
 
+// Módulo: Credits (Sprint 15)
+const CreditCustomer = require('../modules/credits/models/Customer')(sequelize);
+const Credit = require('../modules/credits/models/Credit')(sequelize);
+const CreditPayment = require('../modules/credits/models/CreditPayment')(sequelize);
+const CreditReminder = require('../modules/credits/models/CreditReminder')(sequelize);
+const CreditAdjustment = require('../modules/credits/models/CreditAdjustment')(sequelize);
+
+// Módulo: Expenses (Sprint 16)
+const ExpenseCategory = require('../modules/expenses/models/ExpenseCategory')(sequelize);
+const Expense = require('../modules/expenses/models/Expense')(sequelize);
+const ExpenseReceipt = require('../modules/expenses/models/ExpenseReceipt')(sequelize);
+const ExpenseRecurring = require('../modules/expenses/models/ExpenseRecurring')(sequelize);
+
 // ============================================
 // DEFINIR RELACIONES
 // ============================================
@@ -261,6 +274,50 @@ CashCount.belongsTo(CashSession, { foreignKey: 'cashSessionId', as: 'session' })
 Sale.hasMany(CashMovement, { foreignKey: 'saleId', as: 'cashMovements' });
 CashMovement.belongsTo(Sale, { foreignKey: 'saleId', as: 'sale' });
 
+// ============ SPRINT 15: CREDITS ============
+
+// CreditCustomer ↔ Credit
+CreditCustomer.hasMany(Credit, { foreignKey: 'customerId', as: 'credits' });
+Credit.belongsTo(CreditCustomer, { foreignKey: 'customerId', as: 'customer' });
+
+// Sale ↔ Credit
+Sale.hasMany(Credit, { foreignKey: 'saleId', as: 'credits' });
+Credit.belongsTo(Sale, { foreignKey: 'saleId', as: 'sale' });
+
+// Credit ↔ CreditPayment
+Credit.hasMany(CreditPayment, { foreignKey: 'creditId', as: 'payments' });
+CreditPayment.belongsTo(Credit, { foreignKey: 'creditId', as: 'credit' });
+
+// Credit ↔ CreditReminder
+Credit.hasMany(CreditReminder, { foreignKey: 'creditId', as: 'reminders' });
+CreditReminder.belongsTo(Credit, { foreignKey: 'creditId', as: 'credit' });
+
+// Credit ↔ CreditAdjustment
+Credit.hasMany(CreditAdjustment, { foreignKey: 'creditId', as: 'adjustments' });
+CreditAdjustment.belongsTo(Credit, { foreignKey: 'creditId', as: 'credit' });
+
+// User ↔ CreditPayment
+User.hasMany(CreditPayment, { foreignKey: 'recordedBy', as: 'creditPayments' });
+CreditPayment.belongsTo(User, { foreignKey: 'recordedBy', as: 'recordedByUser' });
+
+// User ↔ CreditAdjustment
+User.hasMany(CreditAdjustment, { foreignKey: 'authorizedBy', as: 'creditAdjustments' });
+CreditAdjustment.belongsTo(User, { foreignKey: 'authorizedBy', as: 'authorizedByUser' });
+
+// ============ SPRINT 16: EXPENSES ============
+
+// Category ↔ Expense
+ExpenseCategory.hasMany(Expense, { foreignKey: 'categoryId', as: 'expenses' });
+Expense.belongsTo(ExpenseCategory, { foreignKey: 'categoryId', as: 'category' });
+
+// Expense ↔ Receipt
+Expense.hasMany(ExpenseReceipt, { foreignKey: 'expenseId', as: 'receipts' });
+ExpenseReceipt.belongsTo(Expense, { foreignKey: 'expenseId', as: 'expense' });
+
+// Category ↔ Recurring
+ExpenseCategory.hasMany(ExpenseRecurring, { foreignKey: 'categoryId', as: 'recurrings' });
+ExpenseRecurring.belongsTo(ExpenseCategory, { foreignKey: 'categoryId', as: 'category' });
+
 // ============================================
 // EXPORTAR
 // ============================================
@@ -323,7 +380,20 @@ const db = {
   // Cash Register
   CashSession,
   CashMovement,
-  CashCount
+  CashCount,
+
+  // Credits
+  CreditCustomer,
+  Credit,
+  CreditPayment,
+  CreditReminder,
+  CreditAdjustment
+  ,
+  // Expenses
+  ExpenseCategory,
+  Expense,
+  ExpenseReceipt,
+  ExpenseRecurring
 };
 
 module.exports = db;
