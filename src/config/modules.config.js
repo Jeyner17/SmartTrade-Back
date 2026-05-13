@@ -215,6 +215,19 @@ const modules = [
   },
 
   // ==========================================
+  // SPRINT 19: NOTIFICACIONES
+  // ==========================================
+  {
+    name: 'notifications',
+    route: '/notifications',
+    path: '../modules/notifications/routes/notification.routes',
+    enabled: true,
+    description: 'Plantillas, envio y reglas de notificaciones',
+    version: '1.0.0',
+    sprint: 19
+  },
+
+  // ==========================================
   // MÁS MÓDULOS FUTUROS...
   // ==========================================
 ];

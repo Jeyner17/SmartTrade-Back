@@ -96,6 +96,12 @@ const Expense = require('../modules/expenses/models/Expense')(sequelize);
 const ExpenseReceipt = require('../modules/expenses/models/ExpenseReceipt')(sequelize);
 const ExpenseRecurring = require('../modules/expenses/models/ExpenseRecurring')(sequelize);
 
+// Módulo: Notifications (Sprint 19)
+const NotificationTemplate = require('../modules/notifications/models/NotificationTemplate')(sequelize);
+const Notification = require('../modules/notifications/models/Notification')(sequelize);
+const NotificationRule = require('../modules/notifications/models/NotificationRule')(sequelize);
+const NotificationSubscription = require('../modules/notifications/models/NotificationSubscription')(sequelize);
+
 // ============================================
 // DEFINIR RELACIONES
 // ============================================
@@ -304,6 +310,24 @@ CreditPayment.belongsTo(User, { foreignKey: 'recordedBy', as: 'recordedByUser' }
 User.hasMany(CreditAdjustment, { foreignKey: 'authorizedBy', as: 'creditAdjustments' });
 CreditAdjustment.belongsTo(User, { foreignKey: 'authorizedBy', as: 'authorizedByUser' });
 
+// ============ SPRINT 19: NOTIFICATIONS ============
+
+// NotificationTemplate ↔ Notification
+NotificationTemplate.hasMany(Notification, { foreignKey: 'templateId', as: 'notifications' });
+Notification.belongsTo(NotificationTemplate, { foreignKey: 'templateId', as: 'template' });
+
+// NotificationRule ↔ NotificationTemplate
+NotificationTemplate.hasMany(NotificationRule, { foreignKey: 'templateId', as: 'rules' });
+NotificationRule.belongsTo(NotificationTemplate, { foreignKey: 'templateId', as: 'template' });
+
+// NotificationRule ↔ Notification
+NotificationRule.hasMany(Notification, { foreignKey: 'ruleId', as: 'notifications' });
+Notification.belongsTo(NotificationRule, { foreignKey: 'ruleId', as: 'rule' });
+
+// User ↔ Notification
+User.hasMany(Notification, { foreignKey: 'createdBy', as: 'notificationsCreated' });
+Notification.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+
 // ============ SPRINT 16: EXPENSES ============
 
 // Category ↔ Expense
@@ -393,7 +417,13 @@ const db = {
   ExpenseCategory,
   Expense,
   ExpenseReceipt,
-  ExpenseRecurring
+  ExpenseRecurring,
+
+  // Notifications
+  NotificationTemplate,
+  Notification,
+  NotificationRule,
+  NotificationSubscription
 };
 
 module.exports = db;

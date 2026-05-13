@@ -58,7 +58,7 @@ const startServer = async () => {
     await syncModels();
 
     const server = app.listen(PORT, () => {
-      logger.success(`🚀 SmartTrade API corriendo en http://localhost:${PORT}${appConfig.apiPrefix}`);
+      logger.success(`🚀 SmartTrade API corriendo en http://localhost:${PORT}/api/docs/`);
     });
 
     // ============================================

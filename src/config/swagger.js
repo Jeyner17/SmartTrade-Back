@@ -38,6 +38,7 @@ Usa **JWT Bearer Token**. Para obtener tu token:
 | 10 | Receptions | ✅ Activo |
 | 12 | POS / Sales | ✅ Activo |
 | 14 | Cash Register | ✅ Activo |
+| 19 | Notifications | ✅ Activo |
     `,
     contact: {
       name: 'LionTech',
@@ -123,6 +124,10 @@ Usa **JWT Bearer Token**. Para obtener tu token:
     {
       name: 'Credits',
       description: 'Gestión de créditos, pagos y estados de cuenta (cuentas por cobrar)'
+    },
+    {
+      name: 'Notifications',
+      description: 'Plantillas, envíos, programación, reglas y suscripciones de notificaciones'
     }
   ],
 
@@ -1029,6 +1034,229 @@ Usa **JWT Bearer Token**. Para obtener tu token:
         required: ['resolutionNotes'],
         properties: {
           resolutionNotes: { type: 'string', maxLength: 500, example: 'Se completó la entrega faltante' }
+        }
+      },
+
+      // --- NOTIFICATIONS ---
+      NotificationTemplate: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Credito Vencido Email' },
+          type: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          subject: { type: 'string', example: 'Tu pago está vencido' },
+          body: { type: 'string', example: 'Hola {{name}}, tu saldo vencido es {{amount}}' },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          variables: { type: 'object', example: { name: 'Juan Perez', amount: 120.5 } },
+          description: { type: 'string', nullable: true, example: 'Plantilla para alertas de crédito' },
+          isActive: { type: 'boolean', example: true },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      Notification: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 15 },
+          trackingId: { type: 'string', example: 'NTF-MK2C1A-ABC123DEF456' },
+          templateId: { type: 'integer', nullable: true, example: 1 },
+          ruleId: { type: 'integer', nullable: true, example: 2 },
+          recipientName: { type: 'string', nullable: true, example: 'Juan Perez' },
+          recipientEmail: { type: 'string', nullable: true, example: 'juan@example.com' },
+          recipientPhone: { type: 'string', nullable: true, example: '0999999999' },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          priority: { type: 'string', enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'], example: 'NORMAL' },
+          subject: { type: 'string', example: 'Tu pago está vencido' },
+          body: { type: 'string', example: 'Hola Juan Perez, tu saldo vencido es 120.50' },
+          variables: { type: 'object', example: { name: 'Juan Perez', amount: 120.5 } },
+          status: { type: 'string', enum: ['SCHEDULED', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'CANCELED'], example: 'DELIVERED' },
+          scheduledAt: { type: 'string', format: 'date-time', nullable: true },
+          sentAt: { type: 'string', format: 'date-time', nullable: true },
+          deliveredAt: { type: 'string', format: 'date-time', nullable: true },
+          readAt: { type: 'string', format: 'date-time', nullable: true },
+          metadata: { type: 'object', example: { source: 'manual' } },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      NotificationRule: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Regla credito vencido' },
+          triggerEvent: { type: 'string', example: 'CREDIT_OVERDUE' },
+          conditions: { type: 'object', example: { daysOverdue: 5 } },
+          templateId: { type: 'integer', nullable: true, example: 1 },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          recipients: { type: 'array', items: { type: 'string' }, example: ['admin@smarttrade.ec'] },
+          isActive: { type: 'boolean', example: true },
+          lastTriggeredAt: { type: 'string', format: 'date-time', nullable: true },
+          description: { type: 'string', nullable: true, example: 'Envía alertas automáticas' },
+          metadata: { type: 'object', example: { module: 'credits' } },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      NotificationSubscription: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          contactValue: { type: 'string', example: 'juan@example.com' },
+          contactMethod: { type: 'string', enum: ['EMAIL', 'SMS'], example: 'EMAIL' },
+          notificationType: { type: 'string', enum: ['INVENTORY', 'CREDITS', 'SALES', 'SYSTEM', 'CUSTOM'], example: 'CREDITS' },
+          isSubscribed: { type: 'boolean', example: true },
+          subscribedAt: { type: 'string', format: 'date-time', nullable: true },
+          unsubscribedAt: { type: 'string', format: 'date-time', nullable: true },
+          metadata: { type: 'object', example: { reason: 'newsletter' } },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreateNotificationTemplateRequest: {
+        type: 'object',
+        required: ['name', 'type', 'subject', 'body', 'channel'],
+        properties: {
+          name: { type: 'string', example: 'Credito Vencido Email' },
+          type: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          subject: { type: 'string', example: 'Tu pago está vencido' },
+          body: { type: 'string', example: 'Hola {{name}}, tu saldo vencido es {{amount}}' },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          variables: { type: 'object', example: { name: 'Juan Perez', amount: 120.5 } },
+          description: { type: 'string', nullable: true, example: 'Plantilla para alertas de crédito' },
+          isActive: { type: 'boolean', example: true }
+        }
+      },
+      SendNotificationRequest: {
+        type: 'object',
+        properties: {
+          recipient: {
+            oneOf: [
+              { type: 'string', example: 'juan@example.com' },
+              {
+                type: 'object',
+                properties: {
+                  email: { type: 'string', example: 'juan@example.com' },
+                  phone: { type: 'string', example: '0999999999' },
+                  name: { type: 'string', example: 'Juan Perez' }
+                }
+              }
+            ]
+          },
+          templateId: { type: 'integer', nullable: true, example: 1 },
+          message: {
+            type: 'object',
+            properties: {
+              subject: { type: 'string', example: 'Mensaje personalizado' },
+              body: { type: 'string', example: 'Contenido libre' }
+            }
+          },
+          subject: { type: 'string', example: 'Mensaje personalizado' },
+          body: { type: 'string', example: 'Contenido libre' },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          priority: { type: 'string', enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'], example: 'NORMAL' },
+          variables: { type: 'object', example: { name: 'Juan Perez', amount: 120.5 } },
+          metadata: { type: 'object', example: { source: 'manual' } }
+        }
+      },
+      BulkNotificationRequest: {
+        type: 'object',
+        required: ['recipients', 'templateId'],
+        properties: {
+          recipients: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              oneOf: [
+                { type: 'string', example: 'juan@example.com' },
+                {
+                  type: 'object',
+                  properties: {
+                    email: { type: 'string', example: 'juan@example.com' },
+                    phone: { type: 'string', example: '0999999999' },
+                    name: { type: 'string', example: 'Juan Perez' }
+                  }
+                }
+              ]
+            }
+          },
+          templateId: { type: 'integer', example: 1 },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          variables: { type: 'object', example: { amount: 120.5 } },
+          metadata: { type: 'object', example: { source: 'bulk' } }
+        }
+      },
+      ScheduleNotificationRequest: {
+        type: 'object',
+        required: ['scheduledAt'],
+        properties: {
+          recipient: {
+            oneOf: [
+              { type: 'string', example: 'juan@example.com' },
+              {
+                type: 'object',
+                properties: {
+                  email: { type: 'string', example: 'juan@example.com' },
+                  phone: { type: 'string', example: '0999999999' },
+                  name: { type: 'string', example: 'Juan Perez' }
+                }
+              }
+            ]
+          },
+          templateId: { type: 'integer', nullable: true, example: 1 },
+          subject: { type: 'string', example: 'Recordatorio programado' },
+          body: { type: 'string', example: 'Tu cita es mañana' },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          priority: { type: 'string', enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'], example: 'HIGH' },
+          variables: { type: 'object', example: { date: '2026-05-15' } },
+          scheduledAt: { type: 'string', format: 'date-time', example: '2026-05-11T09:00:00Z' },
+          metadata: { type: 'object', example: { source: 'scheduler' } }
+        }
+      },
+      CreateNotificationRuleRequest: {
+        type: 'object',
+        required: ['name', 'triggerEvent', 'channel'],
+        properties: {
+          name: { type: 'string', example: 'Regla credito vencido' },
+          triggerEvent: { type: 'string', example: 'CREDIT_OVERDUE' },
+          conditions: { type: 'object', example: { daysOverdue: 5 } },
+          templateId: { type: 'integer', nullable: true, example: 1 },
+          channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'], example: 'EMAIL' },
+          recipients: { type: 'array', items: { type: 'string' }, example: ['admin@smarttrade.ec'] },
+          isActive: { type: 'boolean', example: true },
+          description: { type: 'string', nullable: true, example: 'Envía alertas automáticas' },
+          metadata: { type: 'object', example: { module: 'credits' } }
+        }
+      },
+      ManageSubscriptionRequest: {
+        type: 'object',
+        required: ['contactValue', 'contactMethod', 'notificationType', 'action'],
+        properties: {
+          contactValue: { type: 'string', example: 'juan@example.com' },
+          contactMethod: { type: 'string', enum: ['EMAIL', 'SMS'], example: 'EMAIL' },
+          notificationType: { type: 'string', enum: ['INVENTORY', 'CREDITS', 'SALES', 'SYSTEM', 'CUSTOM'], example: 'CREDITS' },
+          action: { type: 'string', enum: ['SUBSCRIBE', 'UNSUBSCRIBE'], example: 'SUBSCRIBE' },
+          metadata: { type: 'object', example: { reason: 'Opt-in manual' } }
+        }
+      },
+      NotificationStats: {
+        type: 'object',
+        properties: {
+          totalSent: { type: 'integer', example: 120 },
+          delivered: { type: 'integer', example: 110 },
+          read: { type: 'integer', example: 85 },
+          failed: { type: 'integer', example: 5 },
+          scheduled: { type: 'integer', example: 10 },
+          openRate: { type: 'number', example: 77.27 },
+          byStatus: {
+            type: 'object',
+            example: {
+              SENT: 10,
+              DELIVERED: 15,
+              READ: 85,
+              FAILED: 5,
+              SCHEDULED: 10
+            }
+          }
         }
       }
     },
@@ -4181,6 +4409,275 @@ Requiere permiso \`inventory:view\`.`,
 
     '/credits/customers/{customerId}/credits/history': {
       get: { tags: ['Credits'], summary: 'Historial de créditos de cliente', parameters: [{ name: 'customerId', in: 'path', required: true, schema: { type: 'integer' } }, { name: 'includePaid', in: 'query', schema: { type: 'boolean' } }], responses: { 200: { description: 'Historial de créditos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } } } }
+    },
+
+    // ============ NOTIFICATIONS (Sprint 19) ============
+    '/notifications/templates': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Listar plantillas',
+        description: 'Devuelve todas las plantillas configuradas con filtro opcional por tipo.',
+        parameters: [{ name: 'type', in: 'query', schema: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'] }, example: 'EMAIL' }],
+        responses: {
+          200: { description: 'Plantillas obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+      post: {
+        tags: ['Notifications'],
+        summary: 'Crear plantilla de notificación',
+        description: 'Crea una plantilla reutilizable para envíos manuales, masivos o automáticos.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateNotificationTemplateRequest' },
+              example: {
+                name: 'Credito Vencido Email',
+                type: 'EMAIL',
+                subject: 'Tu pago está vencido',
+                body: 'Hola {{name}}, tu saldo vencido es {{amount}}',
+                channel: 'EMAIL',
+                variables: { name: 'Juan Perez', amount: 120.5 },
+                description: 'Plantilla para alertas de crédito',
+                isActive: true
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Plantilla creada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/send': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Enviar notificación manual',
+        description: 'Envía una notificación individual con plantilla o mensaje personalizado.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/SendNotificationRequest' },
+              example: {
+                recipient: { email: 'juan@example.com', name: 'Juan Perez' },
+                templateId: 1,
+                channel: 'EMAIL',
+                priority: 'NORMAL',
+                variables: { name: 'Juan Perez', amount: 120.5 },
+                metadata: { source: 'manual' }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Notificación enviada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/send/bulk': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Enviar notificación masiva',
+        description: 'Envía una notificación a múltiples destinatarios y retorna un resumen de resultados.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/BulkNotificationRequest' },
+              example: {
+                recipients: [
+                  { email: 'juan@example.com', name: 'Juan Perez' },
+                  { email: 'ana@example.com', name: 'Ana Lopez' }
+                ],
+                templateId: 1,
+                channel: 'EMAIL',
+                variables: { amount: 120.5 },
+                metadata: { source: 'bulk' }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Resumen de envíos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/schedule': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Programar notificación',
+        description: 'Agenda el envío de una notificación para una fecha y hora futura.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ScheduleNotificationRequest' },
+              example: {
+                recipient: { email: 'juan@example.com', name: 'Juan Perez' },
+                templateId: 1,
+                scheduledAt: '2026-05-11T09:00:00Z',
+                channel: 'EMAIL',
+                priority: 'HIGH',
+                variables: { date: '2026-05-15' },
+                metadata: { source: 'scheduler' }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Notificación programada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/history': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Historial de envíos',
+        description: 'Lista las notificaciones enviadas con filtros por destinatario, estado, canal y fechas.',
+        parameters: [
+          { name: 'recipient', in: 'query', schema: { type: 'string' }, example: 'juan@example.com' },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['SCHEDULED', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'CANCELED'] }, example: 'DELIVERED' },
+          { name: 'channel', in: 'query', schema: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH'] }, example: 'EMAIL' },
+          { name: 'from', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-05-01T00:00:00Z' },
+          { name: 'to', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-05-31T23:59:59Z' }
+        ],
+        responses: {
+          200: { description: 'Historial obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/{id}/status': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Obtener estado de notificación',
+        description: 'Consulta el estado actual de una notificación por ID.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 15 }],
+        responses: {
+          200: { description: 'Estado obtenido', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/rules': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Listar reglas activas',
+        description: 'Devuelve las reglas de automatización configuradas, con filtro por activas/inactivas.',
+        parameters: [{ name: 'active', in: 'query', schema: { type: 'boolean' }, example: true }],
+        responses: {
+          200: { description: 'Reglas obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      },
+      post: {
+        tags: ['Notifications'],
+        summary: 'Configurar regla automática',
+        description: 'Crea una regla de notificación automática según un evento disparador.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateNotificationRuleRequest' },
+              example: {
+                name: 'Regla credito vencido',
+                triggerEvent: 'CREDIT_OVERDUE',
+                conditions: { daysOverdue: 5 },
+                templateId: 1,
+                channel: 'EMAIL',
+                recipients: ['admin@smarttrade.ec'],
+                isActive: true,
+                description: 'Envía alertas automáticas',
+                metadata: { module: 'credits' }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'Regla creada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/subscriptions': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Suscribir o desuscribir destinatario',
+        description: 'Permite gestionar la suscripción de un email o teléfono para un tipo de notificaciones.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ManageSubscriptionRequest' },
+              example: {
+                contactValue: 'juan@example.com',
+                contactMethod: 'EMAIL',
+                notificationType: 'CREDITS',
+                action: 'SUBSCRIBE',
+                metadata: { reason: 'Opt-in manual' }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'Suscripción actualizada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    },
+
+    '/notifications/stats': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Obtener estadísticas de envío',
+        description: 'Genera métricas de efectividad de notificaciones para un rango de fechas.',
+        parameters: [
+          { name: 'from', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-05-01T00:00:00Z' },
+          { name: 'to', in: 'query', schema: { type: 'string', format: 'date-time' }, example: '2026-05-31T23:59:59Z' }
+        ],
+        responses: {
+          200: { description: 'Estadísticas obtenidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccess' } } } },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          422: { $ref: '#/components/responses/ValidationError' }
+        }
+      }
     },
     
     // ============ CASH REGISTER ENDPOINTS ============
