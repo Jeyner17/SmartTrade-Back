@@ -6,6 +6,8 @@ const {
 	validate,
 	validateCreateCustomer,
 	validateCreateCredit,
+	validateListCustomers,
+	validateListSalesForCredit,
 	validateListCredits,
 	validateCreditId,
 	validateRegisterPayment,
@@ -33,6 +35,24 @@ router.post(
 	validate,
 	auditLog('CREDITS_CREATE_CUSTOMER'),
 	asyncHandler(creditController.createCustomer)
+);
+
+// 1.1 Listar clientes de credito
+router.get(
+	'/customers',
+	requirePermission(MODULES.CREDITS, ACTIONS.VIEW),
+	validateListCustomers,
+	validate,
+	asyncHandler(creditController.listCustomers)
+);
+
+// 1.2 Listar ventas elegibles para credito
+router.get(
+	'/sales',
+	requirePermission(MODULES.CREDITS, ACTIONS.VIEW),
+	validateListSalesForCredit,
+	validate,
+	asyncHandler(creditController.listSalesForCredit)
 );
 
 // 2. Crear venta a credito

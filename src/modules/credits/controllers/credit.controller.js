@@ -15,6 +15,26 @@ class CreditController {
 		}
 	}
 
+	async listCustomers(req, res) {
+		try {
+			const result = await creditService.listCustomers(req.query);
+			return ApiResponse.success(res, result, 'Clientes de credito obtenidos correctamente');
+		} catch (error) {
+			logger.error('Error en listCustomers:', error);
+			return ApiResponse.error(res, 'Error al listar clientes de credito');
+		}
+	}
+
+	async listSalesForCredit(req, res) {
+		try {
+			const result = await creditService.listSalesForCredit(req.query);
+			return ApiResponse.success(res, result, 'Ventas para credito obtenidas correctamente');
+		} catch (error) {
+			logger.error('Error en listSalesForCredit:', error);
+			return ApiResponse.error(res, 'Error al listar ventas para credito');
+		}
+	}
+
 	async createCredit(req, res) {
 		try {
 			const result = await creditService.createCredit(req.body);

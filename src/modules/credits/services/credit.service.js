@@ -53,6 +53,117 @@ class CreditService {
 		return customer;
 	}
 
+	async listCustomers(filters) {
+		const page = Math.max(1, Number(filters.page || 1));
+		const limit = Math.min(100, Math.max(1, Number(filters.limit || 20)));
+		const offset = (page - 1) * limit;
+
+		const where = {};
+		if (filters.term) {
+			where[Op.or] = [
+				{ fullName: { [Op.iLike]: `%${filters.term}%` } },
+				{ documentNumber: { [Op.iLike]: `%${filters.term}%` } },
+				{ phone: { [Op.iLike]: `%${filters.term}%` } }
+			];
+		}
+
+		const { rows, count } = await db.CreditCustomer.findAndCountAll({
+			where,
+			attributes: ['id', 'fullName', 'documentNumber', 'phone', 'email', 'creditLimit'],
+			order: [['fullName', 'ASC']],
+			limit,
+			offset
+		});
+
+		return {
+			data: rows,
+			pagination: {
+				page,
+				limit,
+				total: count,
+				totalPages: Math.ceil(count / limit)
+			}
+		};
+	}
+
+	async listSalesForCredit(filters) {
+		const page = Math.max(1, Number(filters.page || 1));
+		const limit = Math.min(100, Math.max(1, Number(filters.limit || 20)));
+		const offset = (page - 1) * limit;
+
+		const where = {
+			status: filters.status || 'completed'
+		};
+
+		if (filters.customerId) {
+			where.customerId = Number(filters.customerId);
+		}
+
+		if (filters.startDate || filters.endDate) {
+			const start = filters.startDate || '1900-01-01';
+			const end = filters.endDate || dayjs().format('YYYY-MM-DD');
+			where.createdAt = {
+				[Op.between]: [
+					dayjs(start).startOf('day').toDate(),
+					dayjs(end).endOf('day').toDate()
+				]
+			};
+		}
+
+		const include = [
+			{
+				model: db.Customer,
+				as: 'customer',
+				attributes: ['id', 'fullName', 'documentNumber', 'phone'],
+				required: false
+			}
+		];
+
+		if (filters.term) {
+			const like = `%${filters.term}%`;
+			where[Op.or] = [
+				{ ticketNumber: { [Op.iLike]: like } },
+				{ '$customer.fullName$': { [Op.iLike]: like } },
+				{ '$customer.documentNumber$': { [Op.iLike]: like } },
+				{ '$customer.phone$': { [Op.iLike]: like } }
+			];
+		}
+
+		const { rows, count } = await db.Sale.findAndCountAll({
+			where,
+			include,
+			attributes: ['id', 'ticketNumber', 'status', 'totalAmount', 'paymentMethod', 'createdAt'],
+			order: [['createdAt', 'DESC']],
+			limit,
+			offset,
+			distinct: true
+		});
+
+		const saleIds = rows.map((sale) => sale.id);
+		const existingCredits = saleIds.length
+			? await db.Credit.findAll({
+				where: {
+					saleId: { [Op.in]: saleIds },
+					status: { [Op.notIn]: ['REFINANCED'] }
+				},
+				attributes: ['saleId']
+			})
+			: [];
+
+		const creditedSaleIds = new Set(existingCredits.map((row) => row.saleId));
+		const filteredRows = rows.filter((sale) => !creditedSaleIds.has(sale.id));
+
+		return {
+			data: filteredRows,
+			pagination: {
+				page,
+				limit,
+				total: count,
+				totalPages: Math.ceil(count / limit)
+			}
+		};
+	}
+
 	async createCredit(payload) {
 		const transaction = await db.sequelize.transaction();
 

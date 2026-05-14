@@ -34,6 +34,22 @@ const validateCreateCredit = [
 	body('observations').optional().isString().trim()
 ];
 
+const validateListCustomers = [
+	query('term').optional().isString().trim().isLength({ min: 1, max: 120 }).withMessage('Termino de busqueda invalido'),
+	query('page').optional().isInt({ min: 1 }),
+	query('limit').optional().isInt({ min: 1, max: 100 })
+];
+
+const validateListSalesForCredit = [
+	query('term').optional().isString().trim().isLength({ min: 1, max: 120 }).withMessage('Termino de busqueda invalido'),
+	query('customerId').optional().isInt({ min: 1 }).withMessage('ID de cliente invalido'),
+	query('status').optional().isIn(['completed', 'voided']).withMessage('Estado de venta invalido'),
+	query('startDate').optional().isISO8601().withMessage('Fecha inicio invalida'),
+	query('endDate').optional().isISO8601().withMessage('Fecha fin invalida'),
+	query('page').optional().isInt({ min: 1 }),
+	query('limit').optional().isInt({ min: 1, max: 100 })
+];
+
 const validateListCredits = [
 	query('customerId').optional().isInt({ min: 1 }).withMessage('ID de cliente invalido'),
 	query('status').optional().isIn(['ACTIVE', 'PAID', 'OVERDUE', 'FORGIVEN', 'REFINANCED']),
@@ -95,6 +111,8 @@ module.exports = {
 	validate,
 	validateCreateCustomer,
 	validateCreateCredit,
+	validateListCustomers,
+	validateListSalesForCredit,
 	validateListCredits,
 	validateCreditId,
 	validateRegisterPayment,
