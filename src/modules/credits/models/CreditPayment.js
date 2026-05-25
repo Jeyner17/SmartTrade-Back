@@ -8,6 +8,7 @@ module.exports = (sequelize) => {
 		id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 		creditId: { type: DataTypes.INTEGER, allowNull: false, field: 'credit_id' },
 		amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+		balanceAfter: { type: DataTypes.DECIMAL(12, 2), allowNull: true, field: 'balance_after' },
 		paymentMethod: {
 			type: DataTypes.ENUM('efectivo', 'tarjeta', 'transferencia'),
 			allowNull: false,

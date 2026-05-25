@@ -18,6 +18,9 @@ const {
   NotificationSubscription
 } = db;
 
+const { sendEmail } = require('./email.service');
+const { sendSms } = require('./sms.service');
+
 const ERROR = {
   TEMPLATE_NOT_FOUND: 'Plantilla no encontrada',
   NOTIFICATION_NOT_FOUND: 'Notificacion no encontrada',
@@ -223,6 +226,20 @@ class NotificationService {
       notificationId: notification.id,
       channel: message.channel
     });
+
+    // Intentar entrega real según el canal (SMTP / Twilio)
+    try {
+      if (message.channel === CHANNELS.EMAIL && notification.recipientEmail) {
+        await sendEmail({ to: notification.recipientEmail, subject: notification.subject, body: notification.body, from: process.env.SMTP_FROM });
+        await notification.update({ status: NOTIFICATION_STATUSES.DELIVERED, deliveredAt: new Date() });
+      } else if (message.channel === CHANNELS.SMS && notification.recipientPhone) {
+        await sendSms({ to: notification.recipientPhone, body: notification.body, from: process.env.TWILIO_FROM });
+        await notification.update({ status: NOTIFICATION_STATUSES.DELIVERED, deliveredAt: new Date() });
+      }
+    } catch (err) {
+      logger.error('Error sending external notification', err);
+      await notification.update({ status: NOTIFICATION_STATUSES.FAILED });
+    }
 
     return notification;
   }

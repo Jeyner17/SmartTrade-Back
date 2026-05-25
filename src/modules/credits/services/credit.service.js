@@ -317,17 +317,19 @@ class CreditService {
 			if (amount <= 0) throw new Error(ERROR.INVALID_PAYMENT_AMOUNT);
 
 			const appliedAmount = Math.min(amount, this.round2(credit.outstandingBalance));
+			const currentBalance = this.round2(credit.outstandingBalance);
+			const newBalance = this.round2(currentBalance - appliedAmount);
 
 			const payment = await db.CreditPayment.create({
 				creditId: credit.id,
 				amount: appliedAmount,
+				balanceAfter: newBalance,
 				paymentMethod: payload.paymentMethod,
 				paymentDate: this.normalizeDate(payload.paymentDate),
 				notes: payload.notes || null,
 				recordedBy: userId || null
 			}, { transaction });
 
-			const newBalance = this.round2(this.round2(credit.outstandingBalance) - appliedAmount);
 			const overdue = dayjs(credit.dueDate).isBefore(dayjs(), 'day');
 
 			await credit.update({
